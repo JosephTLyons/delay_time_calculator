@@ -140,7 +140,7 @@ struct Tap {
 #[derive(Debug, Clone)]
 enum Message {
     Tap,
-    ManualReset,
+    Reset,
     ScaleTempo(f64),
     TempoInputSubmitted,
     TempoInputChanged(String),
@@ -185,7 +185,7 @@ impl Application for Tap {
                     None => self.tempo_input_text = "N/A".to_string(),
                 }
             }
-            Message::ManualReset => {
+            Message::Reset => {
                 self.tap_tempo.reset();
                 self.last_tap = None;
             }
@@ -221,10 +221,7 @@ impl Application for Tap {
                 .on_press(Message::Tap)
                 .width(75)
                 .into(),
-            button("Reset")
-                .on_press(Message::ManualReset)
-                .width(75)
-                .into(),
+            button("Reset").on_press(Message::Reset).width(75).into(),
             text_input("", self.tempo_input_text.as_str())
                 .on_input(|text| Message::TempoInputChanged(text))
                 .on_submit(Message::TempoInputSubmitted)
