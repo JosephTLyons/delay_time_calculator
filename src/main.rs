@@ -359,7 +359,6 @@ mod tests {
 // TODO - auto reset tap tempo
 // TODO - reverse input
 // TODO - keyboard driven
-// TODO - copy to click
+// TODO - click to copy to clipboard
 // TODO - styling
-// TODO - scaling UI
 // TODO - precision input
