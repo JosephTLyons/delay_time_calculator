@@ -148,13 +148,13 @@ enum Message {
 
 impl Default for Tap {
     fn default() -> Self {
-        let default_tempo = 120.0;
+        let tempo = 120.0;
 
         Self {
             tap_tempo: TapTempo::new(),
-            tempo: Some(default_tempo),
+            tempo: Some(tempo),
             last_tap_instant: None,
-            tempo_input_text: default_tempo.to_string(),
+            tempo_input_text: tempo.to_string(),
             unit: Unit::Milliseconds,
         }
     }
