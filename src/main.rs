@@ -362,6 +362,4 @@ mod tests {
 // TODO - copy to click
 // TODO - styling
 // TODO - scaling UI
-
-// hz = cycles / second
-// 60 cycles / minute
+// TODO - precision input
