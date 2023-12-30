@@ -142,8 +142,7 @@ enum Message {
     Tap,
     Reset,
     ScaleTempo(f64),
-    TempoInputSubmitted,
-    TempoInputChanged(String),
+    StoreTempo(String),
     UpdateUnit,
 }
 
@@ -195,8 +194,10 @@ impl Application for Tap {
                     self.tempo_input_text = format!("{:.3}", self.tempo.unwrap());
                 }
             }
-            Message::TempoInputSubmitted => self.tempo = self.tempo_input_text.parse().ok(),
-            Message::TempoInputChanged(text) => self.tempo_input_text = text,
+            Message::StoreTempo(text) => {
+                self.tempo_input_text = text;
+                self.tempo = self.tempo_input_text.parse().ok()
+            }
             Message::UpdateUnit => self.unit = self.unit.toggle(),
         }
 
@@ -223,8 +224,7 @@ impl Application for Tap {
                 .into(),
             button("Reset").on_press(Message::Reset).width(75).into(),
             text_input("", self.tempo_input_text.as_str())
-                .on_input(|text| Message::TempoInputChanged(text))
-                .on_submit(Message::TempoInputSubmitted)
+                .on_input(|text| Message::StoreTempo(text))
                 .into(),
             button("Halve")
                 .on_press(Message::ScaleTempo(0.5))
