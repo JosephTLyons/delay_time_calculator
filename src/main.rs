@@ -332,7 +332,7 @@ fn calculate_hz(
     note_modifier: &NoteValue,
     rhythmic_modifier: &RhythmicModifier,
 ) -> f64 {
-    60.0 / (tempo * note_modifier.value() * rhythmic_modifier.value())
+    (tempo / 60.0) * note_modifier.value() * rhythmic_modifier.value()
 }
 
 #[cfg(test)]
@@ -341,81 +341,36 @@ mod tests {
 
     #[test]
     fn test_calculate_ms() {
-        assert_eq!(
-            calculate_ms(120.0, &NoteValue::Whole, &RhythmicModifier::Normal),
-            2000.0
-        );
-
-        assert_eq!(
-            calculate_ms(120.0, &NoteValue::Half, &RhythmicModifier::Normal),
-            2000.0 / 2.0
-        );
-
-        assert_eq!(
-            calculate_ms(120.0, &NoteValue::Quarter, &RhythmicModifier::Normal),
-            2000.0 / 4.0
-        );
-
-        assert_eq!(
-            calculate_ms(120.0, &NoteValue::Eighth, &RhythmicModifier::Normal),
-            2000.0 / 8.0
-        );
-
-        assert_eq!(
-            calculate_ms(120.0, &NoteValue::Sixteenth, &RhythmicModifier::Normal),
-            2000.0 / 16.0
-        );
-
-        assert_eq!(
-            calculate_ms(120.0, &NoteValue::ThirtySecond, &RhythmicModifier::Normal),
-            2000.0 / 32.0
-        );
-
-        assert_eq!(
-            calculate_ms(120.0, &NoteValue::SixtyFourth, &RhythmicModifier::Normal),
-            2000.0 / 64.0
-        );
-
-        assert_eq!(
-            calculate_ms(
-                120.0,
-                &NoteValue::HundredTwentyEighth,
-                &RhythmicModifier::Normal
-            ),
-            2000.0 / 128.0
-        );
-
-        assert_eq!(
-            calculate_ms(120.0, &NoteValue::Quarter, &RhythmicModifier::Dotted),
-            2000.0 / 4.0 * 1.5
-        );
-
-        assert_eq!(
-            calculate_ms(120.0, &NoteValue::Quarter, &RhythmicModifier::Triplet),
-            2000.0 / (4.0 * (3.0 / 2.0))
-        );
+        for rhythmic_modifier in RHYTHMIC_MODIFIER.iter() {
+            for (i, note_value) in NOTE_VALUES.iter().enumerate() {
+                assert_eq!(
+                    calculate_ms(120.0, note_value, rhythmic_modifier),
+                    (2000.0 / 2u32.pow(i as u32) as f64) * rhythmic_modifier.value()
+                );
+            }
+        }
     }
 
     #[test]
     fn test_calculate_hz() {
-        let value = calculate_hz(120.0, &NoteValue::Quarter, &RhythmicModifier::Normal);
-        assert_eq!(value, 2.0);
-
-        let value = calculate_hz(120.0, &NoteValue::Eighth, &RhythmicModifier::Normal);
-        assert_eq!(value, 4.0);
-
-        let value = calculate_hz(180.0, &NoteValue::Quarter, &RhythmicModifier::Dotted);
-        assert_eq!(value, 2.0);
-
-        let value = calculate_hz(200.0, &NoteValue::Quarter, &RhythmicModifier::Triplet);
-        assert_eq!(value, 5.0);
+        for rhythmic_modifier in RHYTHMIC_MODIFIER.iter() {
+            for (i, note_value) in NOTE_VALUES.iter().enumerate() {
+                assert_eq!(
+                    calculate_hz(120.0, note_value, rhythmic_modifier),
+                    (8.0 / 2u32.pow(i as u32) as f64) * rhythmic_modifier.value()
+                );
+            }
+        }
     }
 }
 
-// TODO - fix hertz via tests
+// TODO - simplify tests
 // TODO - auto reset tap tempo
 // TODO - reverse input
 // TODO - keyboard driven
 // TODO - copy to click
 // TODO - styling
 // TODO - scaling UI
+
+// hz = cycles / second
+// 60 cycles / minute
