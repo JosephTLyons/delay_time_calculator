@@ -332,7 +332,7 @@ fn calculate_hz(
     note_modifier: &NoteValue,
     rhythmic_modifier: &RhythmicModifier,
 ) -> f64 {
-    (tempo / 60.0) * note_modifier.value() * rhythmic_modifier.value()
+    tempo / (60.0 * note_modifier.value() * rhythmic_modifier.value())
 }
 
 #[cfg(test)]
@@ -340,24 +340,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_calculate_ms() {
+    fn test_calculatations() {
         for rhythmic_modifier in RHYTHMIC_MODIFIER.iter() {
             for (i, note_value) in NOTE_VALUES.iter().enumerate() {
+                let power_value = 2u32.pow(i as u32) as f64;
                 assert_eq!(
                     calculate_ms(120.0, note_value, rhythmic_modifier),
-                    (2000.0 / 2u32.pow(i as u32) as f64) * rhythmic_modifier.value()
+                    (2000.0 / power_value) * rhythmic_modifier.value()
                 );
-            }
-        }
-    }
 
-    #[test]
-    fn test_calculate_hz() {
-        for rhythmic_modifier in RHYTHMIC_MODIFIER.iter() {
-            for (i, note_value) in NOTE_VALUES.iter().enumerate() {
                 assert_eq!(
                     calculate_hz(120.0, note_value, rhythmic_modifier),
-                    (8.0 / 2u32.pow(i as u32) as f64) * rhythmic_modifier.value()
+                    (0.5 * power_value) / rhythmic_modifier.value()
                 );
             }
         }
