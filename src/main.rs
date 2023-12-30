@@ -132,7 +132,7 @@ pub fn main() -> iced::Result {
 struct Tap {
     tap_tempo: TapTempo,
     tempo: Option<f64>,
-    last_tap: Option<Instant>,
+    last_tap_instant: Option<Instant>,
     tempo_input_text: String,
     unit: Unit,
 }
@@ -153,7 +153,7 @@ impl Default for Tap {
         Self {
             tap_tempo: TapTempo::new(),
             tempo: Some(default_tempo),
-            last_tap: None,
+            last_tap_instant: None,
             tempo_input_text: default_tempo.to_string(),
             unit: Unit::Milliseconds,
         }
@@ -178,7 +178,7 @@ impl Application for Tap {
         match message {
             Message::Tap => {
                 self.tempo = self.tap_tempo.tap();
-                self.last_tap = Some(Instant::now());
+                self.last_tap_instant = Some(Instant::now());
                 match self.tempo {
                     Some(tempo) => self.tempo_input_text = format!("{:.3}", tempo),
                     None => self.tempo_input_text = "N/A".to_string(),
@@ -186,7 +186,7 @@ impl Application for Tap {
             }
             Message::Reset => {
                 self.tap_tempo.reset();
-                self.last_tap = None;
+                self.last_tap_instant = None;
             }
             Message::ScaleTempo(scale) => {
                 if let Some(tempo) = self.tempo {
