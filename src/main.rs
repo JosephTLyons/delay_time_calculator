@@ -120,6 +120,7 @@ const NOT_APPLICABLE: &str = "N/A";
 
 pub fn main() -> iced::Result {
     iced::application("Tap Tempo", Tap::update, Tap::view)
+        .theme(|_| Theme::Dracula)
         .window(iced::window::Settings {
             size: Size {
                 width: 650.0,
