@@ -117,18 +117,20 @@ const NOTE_VALUES: [NoteValue; 8] = [
 
 const SPACING: u16 = 15;
 const NOT_APPLICABLE: &str = "N/A";
+const INITIAL_WINDOW_SIZE: Size = Size {
+    width: 650.0,
+    height: 600.0,
+};
 
 pub fn main() -> iced::Result {
     iced::application("Tap Tempo", Tap::update, Tap::view)
         .theme(|_| Theme::Dracula)
         .window(iced::window::Settings {
             size: Size {
-                width: 650.0,
-                height: 600.0,
+                ..INITIAL_WINDOW_SIZE
             },
             min_size: Some(Size {
-                width: 650.0,
-                height: 600.0,
+                ..INITIAL_WINDOW_SIZE
             }),
             max_size: None,
             ..iced::window::Settings::default()
