@@ -6,6 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.31"
-iced = { version = "0.10.0", features = ["canvas", "tokio", "debug"]}
+chrono = "0.4.39"
+iced = { version = "0.13.1", features = ["canvas", "tokio", "debug"] }
 tap_tempo = "0.1.1"

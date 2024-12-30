@@ -2,7 +2,7 @@ use std::fmt::Display;
 use std::time::Instant;
 
 use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Space, Text};
-use iced::{executor, Application, Command, Element, Length, Renderer, Settings, Theme};
+use iced::{Element, Length, Renderer, Size, Task, Theme};
 use tap_tempo::TapTempo;
 
 #[derive(Debug, Clone)]
@@ -118,15 +118,21 @@ const NOTE_VALUES: [NoteValue; 8] = [
 const SPACING: u16 = 15;
 
 pub fn main() -> iced::Result {
-    Tap::run(Settings {
-        window: iced::window::Settings {
-            size: (650, 600),
-            min_size: Some((650, 600)),
+    iced::application("Tap Tempo", Tap::update, Tap::view)
+        .window(iced::window::Settings {
+            size: Size {
+                width: 650.0,
+                height: 600.0,
+            },
+            min_size: Some(Size {
+                width: 650.0,
+                height: 600.0,
+            }),
             max_size: None,
             ..iced::window::Settings::default()
-        },
-        ..Settings::default()
-    })
+        })
+        .antialiasing(true)
+        .run()
 }
 
 struct Tap {
@@ -160,21 +166,8 @@ impl Default for Tap {
     }
 }
 
-impl Application for Tap {
-    type Executor = executor::Default;
-    type Message = Message;
-    type Theme = Theme;
-    type Flags = ();
-
-    fn new(_: Self::Flags) -> (Self, Command<Message>) {
-        (Self::default(), Command::none())
-    }
-
-    fn title(&self) -> String {
-        String::from("Tap Tempo")
-    }
-
-    fn update(&mut self, message: Message) -> Command<Message> {
+impl Tap {
+    fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::Tap => {
                 self.tempo = self.tap_tempo.tap();
@@ -201,16 +194,18 @@ impl Application for Tap {
             Message::UpdateUnit => self.unit = self.unit.toggle(),
         }
 
-        Command::none()
+        Task::none()
     }
 
     fn view(&self) -> Element<Message> {
         let tap_count = self.tap_tempo.tap_count();
-        let tap_button_text = Text::new(if tap_count == 0 {
+        let tap_text = if tap_count == 0 {
             "Tap".to_string()
         } else {
             format!("Tap ({})", tap_count)
-        });
+        };
+
+        let tap_button_text = text(tap_text);
 
         let (ms_selected, hz_selected) = match self.unit {
             Unit::Milliseconds => (Some(()), None),
@@ -222,15 +217,18 @@ impl Application for Tap {
                 .on_press(Message::Tap)
                 .width(75)
                 .into(),
-            button("Reset").on_press(Message::Reset).width(75).into(),
+            button(text("Reset"))
+                .on_press(Message::Reset)
+                .width(75)
+                .into(),
             text_input("", self.tempo_input_text.as_str())
                 .on_input(|text| Message::StoreTempo(text))
                 .into(),
-            button("Halve")
+            button(text("Halve"))
                 .on_press(Message::ScaleTempo(0.5))
                 .width(75)
                 .into(),
-            button("Double")
+            button(text("Double"))
                 .on_press(Message::ScaleTempo(2.0))
                 .width(75)
                 .into(),
@@ -264,7 +262,7 @@ impl Application for Tap {
     // }
 }
 
-fn table<'a>(tempo: Option<f64>, unit: &Unit) -> Row<'a, Message, Renderer> {
+fn table<'a>(tempo: Option<f64>, unit: &Unit) -> Row<'a, Message, Theme, Renderer> {
     let mut note_labels: Vec<Element<_>> = vec![
         text("").height(Length::Fill).into(), // Is there a better way to add a blank cell?
     ];
@@ -275,7 +273,7 @@ fn table<'a>(tempo: Option<f64>, unit: &Unit) -> Row<'a, Message, Renderer> {
             .into()
     }));
 
-    let note_label_column = Column::with_children(note_labels.into()).height(Length::Fill);
+    let note_label_column = Column::with_children(note_labels).height(Length::Fill);
 
     let mut table: Vec<Element<_>> = vec![note_label_column.width(Length::Fill).into()];
 
@@ -294,7 +292,7 @@ fn values_column<'a>(
     tempo: Option<f64>,
     rhythmic_modifier: &RhythmicModifier,
     unit: &Unit,
-) -> Column<'a, Message, Renderer> {
+) -> Column<'a, Message, Theme, Renderer> {
     let mut column: Vec<Element<_>> = vec![text(rhythmic_modifier.to_string())
         .height(Length::Fill)
         .into()];
