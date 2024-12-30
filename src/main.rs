@@ -116,6 +116,7 @@ const NOTE_VALUES: [NoteValue; 8] = [
 ];
 
 const SPACING: u16 = 15;
+const NOT_APPLICABLE: &str = "N/A";
 
 pub fn main() -> iced::Result {
     iced::application("Tap Tempo", Tap::update, Tap::view)
@@ -174,7 +175,7 @@ impl Tap {
                 self.last_tap_instant = Some(Instant::now());
                 match self.tempo {
                     Some(tempo) => self.tempo_input_text = format!("{:.3}", tempo),
-                    None => self.tempo_input_text = "N/A".to_string(),
+                    None => self.tempo_input_text = NOT_APPLICABLE.to_string(),
                 }
             }
             Message::Reset => {
@@ -305,7 +306,7 @@ fn values_column<'a>(
                 };
                 format!("{:.3} {}", value, unit.to_string())
             }
-            None => "N/A".to_string(),
+            None => NOT_APPLICABLE.to_string(),
         })
         .height(Length::Fill)
         .into()
