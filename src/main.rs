@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::time::Instant;
 
+use arboard::Clipboard;
 use delay_times;
 use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Space, Text};
 use iced::{Element, Length, Renderer, Size, Task, Theme};
@@ -121,6 +122,7 @@ struct Tap {
     last_tap_instant: Option<Instant>,
     tempo_input_text: String,
     unit: Unit,
+    clipboard: Option<Clipboard>,
 }
 
 #[derive(Debug, Clone)]
@@ -130,6 +132,7 @@ enum Message {
     ScaleTempo(f64),
     StoreTempo(String),
     UpdateUnit,
+    CopyToClipboard(f64),
 }
 
 impl Default for Tap {
@@ -142,6 +145,7 @@ impl Default for Tap {
             last_tap_instant: None,
             tempo_input_text: tempo.to_string(),
             unit: Unit::Milliseconds,
+            clipboard: Clipboard::new().ok(),
         }
     }
 }
@@ -172,6 +176,11 @@ impl Tap {
                 self.tempo = self.tempo_input_text.parse().ok()
             }
             Message::UpdateUnit => self.unit = self.unit.toggle(),
+            Message::CopyToClipboard(value) => {
+                self.clipboard
+                    .as_mut()
+                    .map(|clipboard| clipboard.set_text(value.to_string()));
+            }
         }
 
         Task::none()
@@ -301,23 +310,27 @@ fn values_column<'a>(
             NoteValue::SixtyFourth => delay_times.v_64th,
             NoteValue::HundredTwentyEighth => delay_times.v_128th,
         });
-        Text::new(match value {
-            Some(value) => {
-                format!("{:.3} {}", value, unit.to_string())
-            }
-            None => NOT_APPLICABLE.to_string(),
-        })
-        .height(Length::Fill)
-        .into()
+
+        let display_text = value
+            .map(|value| format!("{:.3} {}", value, unit.to_string()))
+            .unwrap_or(NOT_APPLICABLE.to_string());
+
+        let mut button = button(Text::new(display_text));
+
+        if let Some(value) = value {
+            button = button.on_press(Message::CopyToClipboard(value));
+        };
+
+        button.height(Length::Fill).into()
     }));
 
     Column::with_children(column)
 }
 
-// TODO - simplify tests
-// TODO - auto reset tap tempo
-// TODO - reverse input
-// TODO - keyboard driven
-// TODO - click to copy to clipboard
-// TODO - styling
-// TODO - precision input
+// TODO: Style buttons to look like label
+// TODO: simplify tests
+// TODO: auto reset tap tempo
+// TODO: reverse input
+// TODO: keyboard driven
+// TODO: styling
+// TODO: precision input
