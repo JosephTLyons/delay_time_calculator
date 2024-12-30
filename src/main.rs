@@ -123,7 +123,7 @@ const INITIAL_WINDOW_SIZE: Size = Size {
 };
 
 pub fn main() -> iced::Result {
-    iced::application("Tap Tempo", Tap::update, Tap::view)
+    iced::application("Delay Time Calculator", Tap::update, Tap::view)
         .theme(|_| Theme::Dracula)
         .window(iced::window::Settings {
             size: Size {
