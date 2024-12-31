@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.39"
+delay_times = "0.2.1"
 iced = { version = "0.13.1", features = ["canvas", "tokio", "debug"] }
 tap_tempo = "0.1.1"
