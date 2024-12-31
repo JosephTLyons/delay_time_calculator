@@ -4,6 +4,7 @@ use std::time::Instant;
 use arboard::Clipboard;
 use delay_times;
 use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Space, Text};
+use iced::window::Settings;
 use iced::{Element, Length, Renderer, Size, Task, Theme};
 use tap_tempo::TapTempo;
 
@@ -102,7 +103,7 @@ const INITIAL_WINDOW_SIZE: Size = Size {
 pub fn main() -> iced::Result {
     iced::application("Delay Time Calculator", Tap::update, Tap::view)
         .theme(|_| Theme::Dracula)
-        .window(iced::window::Settings {
+        .window(Settings {
             size: Size {
                 ..INITIAL_WINDOW_SIZE
             },
@@ -110,7 +111,7 @@ pub fn main() -> iced::Result {
                 ..INITIAL_WINDOW_SIZE
             }),
             max_size: None,
-            ..iced::window::Settings::default()
+            ..Settings::default()
         })
         .antialiasing(true)
         .run()
@@ -334,3 +335,4 @@ fn values_column<'a>(
 // TODO: keyboard driven
 // TODO: styling
 // TODO: precision input
+// TODO: Click and drag to adjust tempo
