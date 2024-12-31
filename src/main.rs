@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::time::Instant;
 
+use delay_times;
 use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Space, Text};
 use iced::{Element, Length, Renderer, Size, Task, Theme};
 use tap_tempo::TapTempo;
@@ -41,16 +42,6 @@ const RHYTHMIC_MODIFIER: [RhythmicModifier; 3] = [
     RhythmicModifier::Triplet,
 ];
 
-impl RhythmicModifier {
-    fn value(&self) -> f64 {
-        match self {
-            RhythmicModifier::Normal => 1.0,
-            RhythmicModifier::Dotted => 1.5,
-            RhythmicModifier::Triplet => 2.0 / 3.0,
-        }
-    }
-}
-
 impl Display for RhythmicModifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -70,21 +61,6 @@ enum NoteValue {
     ThirtySecond,
     SixtyFourth,
     HundredTwentyEighth,
-}
-
-impl NoteValue {
-    fn value(&self) -> f64 {
-        match self {
-            NoteValue::Whole => 4.0,
-            NoteValue::Half => 2.0,
-            NoteValue::Quarter => 1.0,
-            NoteValue::Eighth => 0.5,
-            NoteValue::Sixteenth => 0.25,
-            NoteValue::ThirtySecond => 1.0 / 8.0,
-            NoteValue::SixtyFourth => 1.0 / 16.0,
-            NoteValue::HundredTwentyEighth => 1.0 / 32.0,
-        }
-    }
 }
 
 impl Display for NoteValue {
@@ -297,16 +273,36 @@ fn values_column<'a>(
     rhythmic_modifier: &RhythmicModifier,
     unit: &Unit,
 ) -> Column<'a, Message, Theme, Renderer> {
+    let delay_times = tempo.map(|tempo| {
+        let delay_times = delay_times::DelayTimes::new(tempo);
+        let delay_times = match unit {
+            Unit::Milliseconds => delay_times.in_ms(),
+            Unit::Hertz => delay_times.in_hz(),
+        };
+        match rhythmic_modifier {
+            RhythmicModifier::Normal => delay_times.normal(),
+            RhythmicModifier::Dotted => delay_times.dotted(),
+            RhythmicModifier::Triplet => delay_times.triplet(),
+        }
+    });
+
     let mut column: Vec<Element<_>> = vec![text(rhythmic_modifier.to_string())
         .height(Length::Fill)
         .into()];
+
     column.extend(NOTE_VALUES.map(|note_value| {
-        Text::new(match tempo {
-            Some(tempo) => {
-                let value = match unit {
-                    Unit::Milliseconds => calculate_ms(tempo, &note_value, rhythmic_modifier),
-                    Unit::Hertz => calculate_hz(tempo, &note_value, rhythmic_modifier),
-                };
+        let value = delay_times.as_ref().map(|delay_times| match note_value {
+            NoteValue::Whole => delay_times.v_whole,
+            NoteValue::Half => delay_times.v_half,
+            NoteValue::Quarter => delay_times.v_quarter,
+            NoteValue::Eighth => delay_times.v_8th,
+            NoteValue::Sixteenth => delay_times.v_16th,
+            NoteValue::ThirtySecond => delay_times.v_32nd,
+            NoteValue::SixtyFourth => delay_times.v_64th,
+            NoteValue::HundredTwentyEighth => delay_times.v_128th,
+        });
+        Text::new(match value {
+            Some(value) => {
                 format!("{:.3} {}", value, unit.to_string())
             }
             None => NOT_APPLICABLE.to_string(),
@@ -316,45 +312,6 @@ fn values_column<'a>(
     }));
 
     Column::with_children(column)
-}
-
-fn calculate_ms(
-    tempo: f64,
-    note_modifier: &NoteValue,
-    rhythmic_modifier: &RhythmicModifier,
-) -> f64 {
-    (1.0 / (tempo / 60_000.0)) * note_modifier.value() * rhythmic_modifier.value()
-}
-
-fn calculate_hz(
-    tempo: f64,
-    note_modifier: &NoteValue,
-    rhythmic_modifier: &RhythmicModifier,
-) -> f64 {
-    tempo / (60.0 * note_modifier.value() * rhythmic_modifier.value())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_calculatations() {
-        for rhythmic_modifier in RHYTHMIC_MODIFIER.iter() {
-            for (i, note_value) in NOTE_VALUES.iter().enumerate() {
-                let power_value = 2u32.pow(i as u32) as f64;
-                assert_eq!(
-                    calculate_ms(120.0, note_value, rhythmic_modifier),
-                    (2000.0 / power_value) * rhythmic_modifier.value()
-                );
-
-                assert_eq!(
-                    calculate_hz(120.0, note_value, rhythmic_modifier),
-                    (0.5 * power_value) / rhythmic_modifier.value()
-                );
-            }
-        }
-    }
 }
 
 // TODO - simplify tests
