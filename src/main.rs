@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use arboard::Clipboard;
 use delay_times;
-use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Space, Text};
+use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Text};
 use iced::window::Settings;
 use iced::{Element, Length, Renderer, Size, Task, Theme};
 use tap_tempo::TapTempo;
@@ -226,7 +226,7 @@ impl Tap {
         .spacing(SPACING);
 
         let table = table(self.tempo, &self.unit).height(Length::Fill);
-        let column = column![controls_row, Space::with_height(SPACING), table];
+        let column = column![controls_row, table].spacing(SPACING);
 
         container(column).padding(SPACING).into()
     }
