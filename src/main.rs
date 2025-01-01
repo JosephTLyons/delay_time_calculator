@@ -174,7 +174,7 @@ impl Tap {
             }
             Message::StoreTempo(text) => {
                 self.tempo_input_text = text;
-                self.tempo = self.tempo_input_text.parse().ok()
+                self.tempo = self.tempo_input_text.parse().ok();
             }
             Message::UpdateUnit => self.unit = self.unit.toggle(),
             Message::CopyToClipboard(value) => {
@@ -203,10 +203,7 @@ impl Tap {
         };
 
         let controls_row = Row::with_children(vec![
-            button(tap_button_text)
-                .on_press(Message::Tap)
-                .width(75)
-                .into(),
+            button(tap_button_text).on_press(Message::Tap).into(),
             button(text("Reset")).on_press(Message::Reset).into(),
             text_input("", self.tempo_input_text.as_str())
                 .on_input(|text| Message::StoreTempo(text))
@@ -228,12 +225,8 @@ impl Tap {
         ])
         .spacing(SPACING);
 
-        let table = table(self.tempo, &self.unit);
-        let column = column![
-            controls_row,
-            Space::with_height(SPACING),
-            table.height(Length::Fill)
-        ];
+        let table = table(self.tempo, &self.unit).height(Length::Fill);
+        let column = column![controls_row, Space::with_height(SPACING), table];
 
         container(column).padding(SPACING).into()
     }
@@ -266,11 +259,12 @@ fn table<'a>(tempo: Option<f64>, unit: &Unit) -> Row<'a, Message, Theme, Rendere
         table.push(
             values_column(tempo, rhythmic_modifier, unit)
                 .width(Length::Fill)
+                .spacing(SPACING)
                 .into(),
         );
     }
 
-    Row::with_children(table)
+    Row::with_children(table).spacing(SPACING)
 }
 
 fn values_column<'a>(
@@ -317,7 +311,7 @@ fn values_column<'a>(
             button = button.on_press(Message::CopyToClipboard(value));
         };
 
-        button.height(Length::Fill).into()
+        button.height(Length::Fill).width(Length::Fill).into()
     }));
 
     Column::with_children(column)
