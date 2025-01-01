@@ -251,7 +251,9 @@ fn table<'a>(tempo: Option<f64>, unit: &Unit) -> Row<'a, Message, Theme, Rendere
             .into()
     }));
 
-    let note_label_column = Column::with_children(note_labels).height(Length::Fill);
+    let note_label_column = Column::with_children(note_labels)
+        .height(Length::Fill)
+        .spacing(SPACING);
 
     let mut table: Vec<Element<_>> = vec![note_label_column.width(Length::Fill).into()];
 
