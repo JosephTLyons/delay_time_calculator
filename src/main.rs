@@ -1,8 +1,10 @@
 use std::fmt::Display;
 use std::time::Instant;
 
+use arboard::Clipboard;
 use delay_times;
-use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Space, Text};
+use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Text};
+use iced::window::Settings;
 use iced::{Element, Length, Renderer, Size, Task, Theme};
 use tap_tempo::TapTempo;
 
@@ -101,7 +103,7 @@ const INITIAL_WINDOW_SIZE: Size = Size {
 pub fn main() -> iced::Result {
     iced::application("Delay Time Calculator", Tap::update, Tap::view)
         .theme(|_| Theme::Dracula)
-        .window(iced::window::Settings {
+        .window(Settings {
             size: Size {
                 ..INITIAL_WINDOW_SIZE
             },
@@ -109,7 +111,7 @@ pub fn main() -> iced::Result {
                 ..INITIAL_WINDOW_SIZE
             }),
             max_size: None,
-            ..iced::window::Settings::default()
+            ..Settings::default()
         })
         .antialiasing(true)
         .run()
@@ -121,6 +123,7 @@ struct Tap {
     last_tap_instant: Option<Instant>,
     tempo_input_text: String,
     unit: Unit,
+    clipboard: Option<Clipboard>,
 }
 
 #[derive(Debug, Clone)]
@@ -130,6 +133,7 @@ enum Message {
     ScaleTempo(f64),
     StoreTempo(String),
     UpdateUnit,
+    CopyToClipboard(f64),
 }
 
 impl Default for Tap {
@@ -142,6 +146,7 @@ impl Default for Tap {
             last_tap_instant: None,
             tempo_input_text: tempo.to_string(),
             unit: Unit::Milliseconds,
+            clipboard: Clipboard::new().ok(),
         }
     }
 }
@@ -169,9 +174,14 @@ impl Tap {
             }
             Message::StoreTempo(text) => {
                 self.tempo_input_text = text;
-                self.tempo = self.tempo_input_text.parse().ok()
+                self.tempo = self.tempo_input_text.parse().ok();
             }
             Message::UpdateUnit => self.unit = self.unit.toggle(),
+            Message::CopyToClipboard(value) => {
+                self.clipboard
+                    .as_mut()
+                    .map(|clipboard| clipboard.set_text(value.to_string()));
+            }
         }
 
         Task::none()
@@ -193,24 +203,16 @@ impl Tap {
         };
 
         let controls_row = Row::with_children(vec![
-            button(tap_button_text)
-                .on_press(Message::Tap)
-                .width(75)
-                .into(),
-            button(text("Reset"))
-                .on_press(Message::Reset)
-                .width(75)
-                .into(),
+            button(tap_button_text).on_press(Message::Tap).into(),
+            button(text("Reset")).on_press(Message::Reset).into(),
             text_input("", self.tempo_input_text.as_str())
                 .on_input(|text| Message::StoreTempo(text))
                 .into(),
             button(text("Halve"))
                 .on_press(Message::ScaleTempo(0.5))
-                .width(75)
                 .into(),
             button(text("Double"))
                 .on_press(Message::ScaleTempo(2.0))
-                .width(75)
                 .into(),
             radio(Unit::Milliseconds.to_string(), (), ms_selected, |_| {
                 Message::UpdateUnit
@@ -223,12 +225,8 @@ impl Tap {
         ])
         .spacing(SPACING);
 
-        let table = table(self.tempo, &self.unit);
-        let column = column![
-            controls_row,
-            Space::with_height(SPACING),
-            table.height(Length::Fill)
-        ];
+        let table = table(self.tempo, &self.unit).height(Length::Fill);
+        let column = column![controls_row, table].spacing(SPACING);
 
         container(column).padding(SPACING).into()
     }
@@ -253,7 +251,9 @@ fn table<'a>(tempo: Option<f64>, unit: &Unit) -> Row<'a, Message, Theme, Rendere
             .into()
     }));
 
-    let note_label_column = Column::with_children(note_labels).height(Length::Fill);
+    let note_label_column = Column::with_children(note_labels)
+        .height(Length::Fill)
+        .spacing(SPACING);
 
     let mut table: Vec<Element<_>> = vec![note_label_column.width(Length::Fill).into()];
 
@@ -261,11 +261,12 @@ fn table<'a>(tempo: Option<f64>, unit: &Unit) -> Row<'a, Message, Theme, Rendere
         table.push(
             values_column(tempo, rhythmic_modifier, unit)
                 .width(Length::Fill)
+                .spacing(SPACING)
                 .into(),
         );
     }
 
-    Row::with_children(table)
+    Row::with_children(table).spacing(SPACING)
 }
 
 fn values_column<'a>(
@@ -301,23 +302,28 @@ fn values_column<'a>(
             NoteValue::SixtyFourth => delay_times.v_64th,
             NoteValue::HundredTwentyEighth => delay_times.v_128th,
         });
-        Text::new(match value {
-            Some(value) => {
-                format!("{:.3} {}", value, unit.to_string())
-            }
-            None => NOT_APPLICABLE.to_string(),
-        })
-        .height(Length::Fill)
-        .into()
+
+        let display_text = value
+            .map(|value| format!("{:.3} {}", value, unit.to_string()))
+            .unwrap_or(NOT_APPLICABLE.to_string());
+
+        let mut button = button(Text::new(display_text));
+
+        if let Some(value) = value {
+            button = button.on_press(Message::CopyToClipboard(value));
+        };
+
+        button.height(Length::Fill).width(Length::Fill).into()
     }));
 
     Column::with_children(column)
 }
 
-// TODO - simplify tests
-// TODO - auto reset tap tempo
-// TODO - reverse input
-// TODO - keyboard driven
-// TODO - click to copy to clipboard
-// TODO - styling
-// TODO - precision input
+// TODO: Style buttons to look like label
+// TODO: simplify tests
+// TODO: auto reset tap tempo
+// TODO: reverse input
+// TODO: keyboard driven
+// TODO: styling
+// TODO: precision input
+// TODO: Click and drag to adjust tempo
