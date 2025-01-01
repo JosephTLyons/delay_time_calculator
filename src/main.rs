@@ -327,3 +327,6 @@ fn values_column<'a>(
 // TODO: styling
 // TODO: precision input
 // TODO: Click and drag to adjust tempo
+// TODO: Remove tap count and instead, adjust color of reset button to be green when tap count > 0
+// TODO: [Other features](https://github.com/JosephTLyons/GUI-Delay-Time-Calculator?tab=readme-ov-file#features)
+// TODO: Click and drag up and down to adjust tempo
