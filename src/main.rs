@@ -207,20 +207,15 @@ impl Tap {
                 .on_press(Message::Tap)
                 .width(75)
                 .into(),
-            button(text("Reset"))
-                .on_press(Message::Reset)
-                .width(75)
-                .into(),
+            button(text("Reset")).on_press(Message::Reset).into(),
             text_input("", self.tempo_input_text.as_str())
                 .on_input(|text| Message::StoreTempo(text))
                 .into(),
             button(text("Halve"))
                 .on_press(Message::ScaleTempo(0.5))
-                .width(75)
                 .into(),
             button(text("Double"))
                 .on_press(Message::ScaleTempo(2.0))
-                .width(75)
                 .into(),
             radio(Unit::Milliseconds.to_string(), (), ms_selected, |_| {
                 Message::UpdateUnit
