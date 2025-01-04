@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use arboard::Clipboard;
 use delay_times;
+use iced::keyboard::key;
 use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Text};
 use iced::window::Settings;
 use iced::{keyboard, Element, Length, Renderer, Size, Subscription, Task, Theme};
@@ -15,8 +16,8 @@ const INITIAL_WINDOW_SIZE: Size = Size {
     height: 600.0,
 };
 const ROUND_LIMIT: i32 = 3;
-const HALVE_MESSAGE: Message = Message::ScaleTempo(0.5, 0.0);
-const DOUBLE_MESSAGE: Message = Message::ScaleTempo(2.0, 0.0);
+const HALVE_MESSAGE: Message = Message::AdjustTempo(0.5, 0.0);
+const DOUBLE_MESSAGE: Message = Message::AdjustTempo(2.0, 0.0);
 
 pub fn main() -> iced::Result {
     iced::application("Delay Time Calculator", Tap::update, Tap::view)
@@ -133,9 +134,9 @@ struct Tap {
 enum Message {
     Tap,
     Reset,
-    // TODO: Can Scale and Store be combined into store with math being applied
+    // TODO: Can Adjust and Store be combined into store with math being applied
     // to the tempo before sending the message?
-    ScaleTempo(f64, f64),
+    AdjustTempo(f64, f64),
     StoreTempo(String),
     ToggleUnit,
     CopyToClipboard(f64),
@@ -168,7 +169,7 @@ impl Tap {
             Message::Reset => {
                 self.tap_tempo.reset();
             }
-            Message::ScaleTempo(multiplier, offset) => {
+            Message::AdjustTempo(multiplier, offset) => {
                 if let Some(tempo) = self.tempo {
                     let tempo = tempo * multiplier + offset;
                     self.tempo = Some(tempo);
@@ -313,10 +314,6 @@ impl Tap {
     // 'M' enables ms
     // 'H' enables Hz
     // 'Spacebar = Round Value
-    // Up Arrow = +1
-    // Down Arrow = -1
-    // Right Arrow = +5
-    // Left Arrow = -5
     // C = Coarse Resolution
     // S = Standard Resolution
     // F = Fine Resolution
@@ -331,6 +328,14 @@ impl Tap {
                 return Some(HALVE_MESSAGE);
             } else if key == keyboard::Key::Character("2".into()) {
                 return Some(DOUBLE_MESSAGE);
+            } else if key == keyboard::Key::Named(key::Named::ArrowUp) {
+                return Some(Message::AdjustTempo(1.0, 1.0));
+            } else if key == keyboard::Key::Named(key::Named::ArrowDown) {
+                return Some(Message::AdjustTempo(1.0, -1.0));
+            } else if key == keyboard::Key::Named(key::Named::ArrowRight) {
+                return Some(Message::AdjustTempo(1.0, 5.0));
+            } else if key == keyboard::Key::Named(key::Named::ArrowLeft) {
+                return Some(Message::AdjustTempo(1.0, -5.0));
             }
 
             None
