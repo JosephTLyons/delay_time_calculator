@@ -302,9 +302,9 @@ impl Tap {
 
             let mut button = button(Text::new(display_text));
 
-            if let Some(value) = value {
+            if let (Some(value), Some(_)) = (value, &self.clipboard) {
                 button = button.on_press(Message::CopyToClipboard(value));
-            };
+            }
 
             button.height(Length::Fill).width(Length::Fill).into()
         }));
