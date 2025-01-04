@@ -132,7 +132,7 @@ enum Message {
     Reset,
     ScaleTempo(f64),
     StoreTempo(String),
-    UpdateUnit,
+    ToggleUnit,
     CopyToClipboard(f64),
 }
 
@@ -176,7 +176,7 @@ impl Tap {
                 self.tempo_input_text = text;
                 self.tempo = self.tempo_input_text.parse().ok();
             }
-            Message::UpdateUnit => self.unit = self.unit.toggle(),
+            Message::ToggleUnit => self.unit = self.unit.toggle(),
             Message::CopyToClipboard(value) => {
                 self.clipboard
                     .as_mut()
@@ -212,11 +212,11 @@ impl Tap {
             button("Halve").on_press(Message::ScaleTempo(0.5)).into(),
             button("Double").on_press(Message::ScaleTempo(2.0)).into(),
             radio(Unit::Milliseconds.to_string(), (), ms_selected, |_| {
-                Message::UpdateUnit
+                Message::ToggleUnit
             })
             .into(),
             radio(Unit::Hertz.to_string(), (), hz_selected, |_| {
-                Message::UpdateUnit
+                Message::ToggleUnit
             })
             .into(),
         ])
