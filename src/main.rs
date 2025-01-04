@@ -18,6 +18,10 @@ const INITIAL_WINDOW_SIZE: Size = Size {
 const ROUND_LIMIT: i32 = 3;
 const HALVE_MESSAGE: Message = Message::AdjustTempo(0.5, 0.0);
 const DOUBLE_MESSAGE: Message = Message::AdjustTempo(2.0, 0.0);
+const INCREMENT_ONE_MESSAGE: Message = Message::AdjustTempo(1.0, 1.0);
+const DECREMENT_ONE_MESSAGE: Message = Message::AdjustTempo(1.0, -1.0);
+const INCREMENT_FIVE_MESSAGE: Message = Message::AdjustTempo(1.0, 5.0);
+const DECREMENT_FIVE_MESSAGE: Message = Message::AdjustTempo(1.0, -5.0);
 
 pub fn main() -> iced::Result {
     iced::application("Delay Time Calculator", Tap::update, Tap::view)
@@ -318,27 +322,22 @@ impl Tap {
     // S = Standard Resolution
     // F = Fine Resolution
     fn subscription(&self) -> Subscription<Message> {
-        keyboard::on_key_press(|key, _| {
-            // TODO: Convert to match
-            if key == keyboard::Key::Character("t".into()) {
-                return Some(Message::Tap);
-            } else if key == keyboard::Key::Character("r".into()) {
-                return Some(Message::Reset);
-            } else if key == keyboard::Key::Character("1".into()) {
-                return Some(HALVE_MESSAGE);
-            } else if key == keyboard::Key::Character("2".into()) {
-                return Some(DOUBLE_MESSAGE);
-            } else if key == keyboard::Key::Named(key::Named::ArrowUp) {
-                return Some(Message::AdjustTempo(1.0, 1.0));
-            } else if key == keyboard::Key::Named(key::Named::ArrowDown) {
-                return Some(Message::AdjustTempo(1.0, -1.0));
-            } else if key == keyboard::Key::Named(key::Named::ArrowRight) {
-                return Some(Message::AdjustTempo(1.0, 5.0));
-            } else if key == keyboard::Key::Named(key::Named::ArrowLeft) {
-                return Some(Message::AdjustTempo(1.0, -5.0));
-            }
-
-            None
+        keyboard::on_key_press(|key, _| match key {
+            keyboard::Key::Character(c) => match c.as_str() {
+                "t" => Some(Message::Tap),
+                "r" => Some(Message::Reset),
+                "1" => Some(HALVE_MESSAGE),
+                "2" => Some(DOUBLE_MESSAGE),
+                _ => None,
+            },
+            keyboard::Key::Named(named) => match named {
+                key::Named::ArrowUp => Some(INCREMENT_ONE_MESSAGE),
+                key::Named::ArrowDown => Some(DECREMENT_ONE_MESSAGE),
+                key::Named::ArrowRight => Some(INCREMENT_FIVE_MESSAGE),
+                key::Named::ArrowLeft => Some(DECREMENT_FIVE_MESSAGE),
+                _ => None,
+            },
+            _ => None,
         })
     }
 }
