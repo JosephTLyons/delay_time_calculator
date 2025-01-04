@@ -4,9 +4,37 @@ use arboard::Clipboard;
 use delay_times;
 use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Text};
 use iced::window::Settings;
-use iced::{Element, Length, Renderer, Size, Task, Theme};
+use iced::{keyboard, Element, Length, Renderer, Size, Subscription, Task, Theme};
 use round::round;
 use tap_tempo::TapTempo;
+
+const SPACING: u16 = 15;
+const NOT_APPLICABLE: &str = "N/A";
+const INITIAL_WINDOW_SIZE: Size = Size {
+    width: 650.0,
+    height: 600.0,
+};
+const ROUND_LIMIT: i32 = 3;
+const HALVE_MESSAGE: Message = Message::ScaleTempo(0.5, 0.0);
+const DOUBLE_MESSAGE: Message = Message::ScaleTempo(2.0, 0.0);
+
+pub fn main() -> iced::Result {
+    iced::application("Delay Time Calculator", Tap::update, Tap::view)
+        .subscription(Tap::subscription)
+        .theme(|_| Theme::Dracula)
+        .window(Settings {
+            size: Size {
+                ..INITIAL_WINDOW_SIZE
+            },
+            min_size: Some(Size {
+                ..INITIAL_WINDOW_SIZE
+            }),
+            max_size: None,
+            ..Settings::default()
+        })
+        .antialiasing(true)
+        .run()
+}
 
 #[derive(Debug, Clone)]
 enum Unit {
@@ -93,31 +121,6 @@ const NOTE_VALUES: [NoteValue; 8] = [
     NoteValue::HundredTwentyEighth,
 ];
 
-const SPACING: u16 = 15;
-const NOT_APPLICABLE: &str = "N/A";
-const INITIAL_WINDOW_SIZE: Size = Size {
-    width: 650.0,
-    height: 600.0,
-};
-const ROUND_LIMIT: i32 = 3;
-
-pub fn main() -> iced::Result {
-    iced::application("Delay Time Calculator", Tap::update, Tap::view)
-        .theme(|_| Theme::Dracula)
-        .window(Settings {
-            size: Size {
-                ..INITIAL_WINDOW_SIZE
-            },
-            min_size: Some(Size {
-                ..INITIAL_WINDOW_SIZE
-            }),
-            max_size: None,
-            ..Settings::default()
-        })
-        .antialiasing(true)
-        .run()
-}
-
 struct Tap {
     tap_tempo: TapTempo,
     tempo: Option<f64>,
@@ -130,7 +133,9 @@ struct Tap {
 enum Message {
     Tap,
     Reset,
-    ScaleTempo(f64),
+    // TODO: Can Scale and Store be combined into store with math being applied
+    // to the tempo before sending the message?
+    ScaleTempo(f64, f64),
     StoreTempo(String),
     ToggleUnit,
     CopyToClipboard(f64),
@@ -163,9 +168,9 @@ impl Tap {
             Message::Reset => {
                 self.tap_tempo.reset();
             }
-            Message::ScaleTempo(scale) => {
+            Message::ScaleTempo(multiplier, offset) => {
                 if let Some(tempo) = self.tempo {
-                    let tempo = tempo * scale;
+                    let tempo = tempo * multiplier + offset;
                     self.tempo = Some(tempo);
                     self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
                 }
@@ -207,8 +212,8 @@ impl Tap {
             text_input("", self.tempo_input_text.as_str())
                 .on_input(|text| Message::StoreTempo(text))
                 .into(),
-            button("Halve").on_press(Message::ScaleTempo(0.5)).into(),
-            button("Double").on_press(Message::ScaleTempo(2.0)).into(),
+            button("Halve").on_press(HALVE_MESSAGE).into(),
+            button("Double").on_press(DOUBLE_MESSAGE).into(),
             radio(Unit::Milliseconds.to_string(), (), ms_selected, |_| {
                 Message::ToggleUnit
             })
@@ -225,14 +230,6 @@ impl Tap {
 
         container(column).padding(SPACING).into()
     }
-
-    // fn subscription(&self) -> Subscription<Message> {
-    //     if self.last_tap.is_some() {
-    //         return Subscription::new();
-    //     }
-
-    //     Subscription::none()
-    // }
 
     fn table<'a>(&self) -> Row<'a, Message, Theme, Renderer> {
         let mut note_labels: Vec<Element<_>> = vec![
@@ -310,6 +307,34 @@ impl Tap {
         }));
 
         Column::with_children(column)
+    }
+
+    // TODO Keys:
+    // 'M' enables ms
+    // 'H' enables Hz
+    // 'Spacebar = Round Value
+    // Up Arrow = +1
+    // Down Arrow = -1
+    // Right Arrow = +5
+    // Left Arrow = -5
+    // C = Coarse Resolution
+    // S = Standard Resolution
+    // F = Fine Resolution
+    fn subscription(&self) -> Subscription<Message> {
+        keyboard::on_key_press(|key, _| {
+            // TODO: Convert to match
+            if key == keyboard::Key::Character("t".into()) {
+                return Some(Message::Tap);
+            } else if key == keyboard::Key::Character("r".into()) {
+                return Some(Message::Reset);
+            } else if key == keyboard::Key::Character("1".into()) {
+                return Some(HALVE_MESSAGE);
+            } else if key == keyboard::Key::Character("2".into()) {
+                return Some(DOUBLE_MESSAGE);
+            }
+
+            None
+        })
     }
 }
 
