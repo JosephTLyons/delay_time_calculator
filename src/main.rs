@@ -1,5 +1,4 @@
 use std::fmt::Display;
-use std::time::Instant;
 
 use arboard::Clipboard;
 use delay_times;
@@ -120,7 +119,6 @@ pub fn main() -> iced::Result {
 struct Tap {
     tap_tempo: TapTempo,
     tempo: Option<f64>,
-    last_tap_instant: Option<Instant>,
     tempo_input_text: String,
     unit: Unit,
     clipboard: Option<Clipboard>,
@@ -143,7 +141,6 @@ impl Default for Tap {
         Self {
             tap_tempo: TapTempo::new(),
             tempo: Some(tempo),
-            last_tap_instant: None,
             tempo_input_text: tempo.to_string(),
             unit: Unit::Milliseconds,
             clipboard: Clipboard::new().ok(),
@@ -156,7 +153,6 @@ impl Tap {
         match message {
             Message::Tap => {
                 self.tempo = self.tap_tempo.tap();
-                self.last_tap_instant = Some(Instant::now());
                 match self.tempo {
                     Some(tempo) => self.tempo_input_text = format!("{:.3}", tempo),
                     None => self.tempo_input_text = NOT_APPLICABLE.to_string(),
@@ -164,7 +160,6 @@ impl Tap {
             }
             Message::Reset => {
                 self.tap_tempo.reset();
-                self.last_tap_instant = None;
             }
             Message::ScaleTempo(scale) => {
                 if let Some(tempo) = self.tempo {
