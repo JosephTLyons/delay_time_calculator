@@ -826,6 +826,7 @@ dependencies = [
  "chrono",
  "delay_times",
  "iced",
+ "round",
  "tap_tempo",
 ]
 
@@ -2592,6 +2593,12 @@ name = "renderdoc-sys"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "216080ab382b992234dda86873c18d4c48358f5cfcb70fd693d7f6f2131b628b"
+
+[[package]]
+name = "round"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b02705db4fa872ae37e464fc803b7ffa574e6c4a5e112c52a82550f9dd63b657"
 
 [[package]]
 name = "roxmltree"

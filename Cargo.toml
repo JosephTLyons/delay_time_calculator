@@ -10,4 +10,5 @@ arboard = "3.4.1"
 chrono = "0.4.39"
 delay_times = "0.2.1"
 iced = { version = "0.13.1", features = ["canvas", "tokio", "debug"] }
+round = "0.1.2"
 tap_tempo = "0.1.1"

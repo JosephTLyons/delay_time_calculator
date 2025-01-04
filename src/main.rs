@@ -5,6 +5,7 @@ use delay_times;
 use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Text};
 use iced::window::Settings;
 use iced::{Element, Length, Renderer, Size, Task, Theme};
+use round::round;
 use tap_tempo::TapTempo;
 
 #[derive(Debug, Clone)]
@@ -98,6 +99,7 @@ const INITIAL_WINDOW_SIZE: Size = Size {
     width: 650.0,
     height: 600.0,
 };
+const ROUND_LIMIT: i32 = 3;
 
 pub fn main() -> iced::Result {
     iced::application("Delay Time Calculator", Tap::update, Tap::view)
@@ -154,7 +156,7 @@ impl Tap {
             Message::Tap => {
                 self.tempo = self.tap_tempo.tap();
                 match self.tempo {
-                    Some(tempo) => self.tempo_input_text = format!("{:.3}", tempo),
+                    Some(tempo) => self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string(),
                     None => self.tempo_input_text = NOT_APPLICABLE.to_string(),
                 }
             }
@@ -164,7 +166,7 @@ impl Tap {
             Message::ScaleTempo(scale) => {
                 if let Some(tempo) = self.tempo {
                     self.tempo = Some(tempo * scale);
-                    self.tempo_input_text = format!("{:.3}", self.tempo.unwrap());
+                    self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
                 }
             }
             Message::StoreTempo(text) => {
@@ -296,7 +298,7 @@ fn values_column<'a>(
         });
 
         let display_text = value
-            .map(|value| format!("{:.3} {}", value, unit.to_string()))
+            .map(|value| format!("{} {}", round(value, ROUND_LIMIT), unit.to_string()))
             .unwrap_or(NOT_APPLICABLE.to_string());
 
         let mut button = button(Text::new(display_text));
