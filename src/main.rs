@@ -188,32 +188,29 @@ impl Tap {
     }
 
     fn view(&self) -> Element<Message> {
-        let tap_count = self.tap_tempo.tap_count();
-        let tap_text = if tap_count == 0 {
-            "Tap".to_string()
-        } else {
-            format!("Tap ({})", tap_count)
-        };
-
-        let tap_button_text = text(tap_text);
-
         let (ms_selected, hz_selected) = match self.unit {
             Unit::Milliseconds => (Some(()), None),
             Unit::Hertz => (None, Some(())),
         };
 
         let controls_row = Row::with_children(vec![
-            button(tap_button_text).on_press(Message::Tap).into(),
-            button(text("Reset")).on_press(Message::Reset).into(),
+            button("Tap").on_press(Message::Tap).into(),
+            button("Reset")
+                .style(|theme: &Theme, status| {
+                    if self.tap_tempo.tap_count() > 0 {
+                        let palette = theme.extended_palette();
+                        button::Style::default().with_background(palette.success.strong.color)
+                    } else {
+                        button::primary(theme, status)
+                    }
+                })
+                .on_press(Message::Reset)
+                .into(),
             text_input("", self.tempo_input_text.as_str())
                 .on_input(|text| Message::StoreTempo(text))
                 .into(),
-            button(text("Halve"))
-                .on_press(Message::ScaleTempo(0.5))
-                .into(),
-            button(text("Double"))
-                .on_press(Message::ScaleTempo(2.0))
-                .into(),
+            button("Halve").on_press(Message::ScaleTempo(0.5)).into(),
+            button("Double").on_press(Message::ScaleTempo(2.0)).into(),
             radio(Unit::Milliseconds.to_string(), (), ms_selected, |_| {
                 Message::UpdateUnit
             })
@@ -327,6 +324,4 @@ fn values_column<'a>(
 // TODO: styling
 // TODO: precision input
 // TODO: Click and drag to adjust tempo
-// TODO: Remove tap count and instead, adjust color of reset button to be green when tap count > 0
 // TODO: [Other features](https://github.com/JosephTLyons/GUI-Delay-Time-Calculator?tab=readme-ov-file#features)
-// TODO: Click and drag up and down to adjust tempo
