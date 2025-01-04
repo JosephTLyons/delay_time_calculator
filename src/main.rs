@@ -41,7 +41,7 @@ pub fn main() -> iced::Result {
         .run()
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Unit {
     Milliseconds,
     Hertz,
@@ -189,11 +189,6 @@ impl Tap {
     }
 
     fn view(&self) -> Element<Message> {
-        let (ms_selected, hz_selected) = match self.unit {
-            Unit::Milliseconds => (Some(()), None),
-            Unit::Hertz => (None, Some(())),
-        };
-
         let controls_row = Row::with_children(vec![
             button("Tap").on_press(Message::Tap).into(),
             button("Reset")
@@ -212,13 +207,20 @@ impl Tap {
                 .into(),
             button("Halve").on_press(HALVE_MESSAGE).into(),
             button("Double").on_press(DOUBLE_MESSAGE).into(),
-            radio(Unit::Milliseconds.to_string(), (), ms_selected, |_| {
-                Message::StoreUnit(Unit::Milliseconds)
-            })
+            // TODO: Refactor into a function?
+            radio(
+                Unit::Milliseconds.to_string(),
+                Unit::Milliseconds,
+                Some(self.unit),
+                Message::StoreUnit,
+            )
             .into(),
-            radio(Unit::Hertz.to_string(), (), hz_selected, |_| {
-                Message::StoreUnit(Unit::Hertz)
-            })
+            radio(
+                Unit::Hertz.to_string(),
+                Unit::Hertz,
+                Some(self.unit),
+                Message::StoreUnit,
+            )
             .into(),
         ])
         .spacing(SPACING);
@@ -348,3 +350,4 @@ impl Tap {
 // TODO: Tap tempo on mouse down
 // TODO: Clamp to 0
 // TODO: Tooltips with key bindings
+// TODO: Move ms / Hz toggle
