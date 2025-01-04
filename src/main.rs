@@ -165,7 +165,8 @@ impl Tap {
             }
             Message::ScaleTempo(scale) => {
                 if let Some(tempo) = self.tempo {
-                    self.tempo = Some(tempo * scale);
+                    let tempo = tempo * scale;
+                    self.tempo = Some(tempo);
                     self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
                 }
             }
