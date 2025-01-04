@@ -347,3 +347,4 @@ impl Tap {
 // TODO: Round input when using enter or exiting focus
 // TODO: Tap tempo on mouse down
 // TODO: Clamp to 0
+// TODO: Tooltips with key bindings
