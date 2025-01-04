@@ -25,7 +25,7 @@ const DECREMENT_FIVE_MESSAGE: Message = Message::AdjustTempo(1.0, -5.0);
 
 pub fn main() -> iced::Result {
     iced::application("Delay Time Calculator", Tap::update, Tap::view)
-        .subscription(Tap::subscription)
+        .subscription(Tap::handle_key_press)
         .theme(|_| Theme::Dracula)
         .window(Settings {
             size: Size {
@@ -312,7 +312,7 @@ impl Tap {
     // C = Coarse Resolution
     // S = Standard Resolution
     // F = Fine Resolution
-    fn subscription(&self) -> Subscription<Message> {
+    fn handle_key_press(&self) -> Subscription<Message> {
         keyboard::on_key_press(|key, _| match key {
             keyboard::Key::Character(c) => match c.as_str() {
                 "1" => Some(HALVE_MESSAGE),
