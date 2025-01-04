@@ -322,3 +322,4 @@ fn values_column<'a>(
 // TODO: precision input
 // TODO: Click and drag to adjust tempo
 // TODO: [Other features](https://github.com/JosephTLyons/GUI-Delay-Time-Calculator?tab=readme-ov-file#features)
+// TODO: Round input when using enter or exiting focus
