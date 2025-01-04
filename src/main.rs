@@ -220,7 +220,7 @@ impl Tap {
         ])
         .spacing(SPACING);
 
-        let table = table(self.tempo, &self.unit).height(Length::Fill);
+        let table = self.table().height(Length::Fill);
         let column = column![controls_row, table].spacing(SPACING);
 
         container(column).padding(SPACING).into()
@@ -233,85 +233,84 @@ impl Tap {
 
     //     Subscription::none()
     // }
-}
 
-fn table<'a>(tempo: Option<f64>, unit: &Unit) -> Row<'a, Message, Theme, Renderer> {
-    let mut note_labels: Vec<Element<_>> = vec![
-        text("").height(Length::Fill).into(), // Is there a better way to add a blank cell?
-    ];
+    fn table<'a>(&self) -> Row<'a, Message, Theme, Renderer> {
+        let mut note_labels: Vec<Element<_>> = vec![
+            text("").height(Length::Fill).into(), // Is there a better way to add a blank cell?
+        ];
 
-    note_labels.extend(NOTE_VALUES.map(|note_value| {
-        text(format!("{}:", note_value.to_string()))
+        note_labels.extend(NOTE_VALUES.map(|note_value| {
+            text(format!("{}:", note_value.to_string()))
+                .height(Length::Fill)
+                .into()
+        }));
+
+        let note_label_column = Column::with_children(note_labels)
             .height(Length::Fill)
-            .into()
-    }));
+            .spacing(SPACING);
 
-    let note_label_column = Column::with_children(note_labels)
-        .height(Length::Fill)
-        .spacing(SPACING);
+        let mut table: Vec<Element<_>> = vec![note_label_column.width(Length::Fill).into()];
 
-    let mut table: Vec<Element<_>> = vec![note_label_column.width(Length::Fill).into()];
+        for rhythmic_modifier in &RHYTHMIC_MODIFIER {
+            table.push(
+                self.values_column(rhythmic_modifier)
+                    .width(Length::Fill)
+                    .spacing(SPACING)
+                    .into(),
+            );
+        }
 
-    for rhythmic_modifier in &RHYTHMIC_MODIFIER {
-        table.push(
-            values_column(tempo, rhythmic_modifier, unit)
-                .width(Length::Fill)
-                .spacing(SPACING)
-                .into(),
-        );
+        Row::with_children(table).spacing(SPACING)
     }
 
-    Row::with_children(table).spacing(SPACING)
-}
-
-fn values_column<'a>(
-    tempo: Option<f64>,
-    rhythmic_modifier: &RhythmicModifier,
-    unit: &Unit,
-) -> Column<'a, Message, Theme, Renderer> {
-    let delay_times = tempo.map(|tempo| {
-        let delay_times = delay_times::DelayTimes::new(tempo);
-        let delay_times = match unit {
-            Unit::Milliseconds => delay_times.in_ms(),
-            Unit::Hertz => delay_times.in_hz(),
-        };
-        match rhythmic_modifier {
-            RhythmicModifier::Normal => delay_times.normal(),
-            RhythmicModifier::Dotted => delay_times.dotted(),
-            RhythmicModifier::Triplet => delay_times.triplet(),
-        }
-    });
-
-    let mut column: Vec<Element<_>> = vec![text(rhythmic_modifier.to_string())
-        .height(Length::Fill)
-        .into()];
-
-    column.extend(NOTE_VALUES.map(|note_value| {
-        let value = delay_times.as_ref().map(|delay_times| match note_value {
-            NoteValue::Whole => delay_times.v_whole,
-            NoteValue::Half => delay_times.v_half,
-            NoteValue::Quarter => delay_times.v_quarter,
-            NoteValue::Eighth => delay_times.v_8th,
-            NoteValue::Sixteenth => delay_times.v_16th,
-            NoteValue::ThirtySecond => delay_times.v_32nd,
-            NoteValue::SixtyFourth => delay_times.v_64th,
-            NoteValue::HundredTwentyEighth => delay_times.v_128th,
+    fn values_column<'a>(
+        &self,
+        rhythmic_modifier: &RhythmicModifier,
+    ) -> Column<'a, Message, Theme, Renderer> {
+        let delay_times = self.tempo.map(|tempo| {
+            let delay_times = delay_times::DelayTimes::new(tempo);
+            let delay_times = match self.unit {
+                Unit::Milliseconds => delay_times.in_ms(),
+                Unit::Hertz => delay_times.in_hz(),
+            };
+            match rhythmic_modifier {
+                RhythmicModifier::Normal => delay_times.normal(),
+                RhythmicModifier::Dotted => delay_times.dotted(),
+                RhythmicModifier::Triplet => delay_times.triplet(),
+            }
         });
 
-        let display_text = value
-            .map(|value| format!("{} {}", round(value, ROUND_LIMIT), unit.to_string()))
-            .unwrap_or(NOT_APPLICABLE.to_string());
+        let mut column: Vec<Element<_>> = vec![text(rhythmic_modifier.to_string())
+            .height(Length::Fill)
+            .into()];
 
-        let mut button = button(Text::new(display_text));
+        column.extend(NOTE_VALUES.map(|note_value| {
+            let value = delay_times.as_ref().map(|delay_times| match note_value {
+                NoteValue::Whole => delay_times.v_whole,
+                NoteValue::Half => delay_times.v_half,
+                NoteValue::Quarter => delay_times.v_quarter,
+                NoteValue::Eighth => delay_times.v_8th,
+                NoteValue::Sixteenth => delay_times.v_16th,
+                NoteValue::ThirtySecond => delay_times.v_32nd,
+                NoteValue::SixtyFourth => delay_times.v_64th,
+                NoteValue::HundredTwentyEighth => delay_times.v_128th,
+            });
 
-        if let Some(value) = value {
-            button = button.on_press(Message::CopyToClipboard(value));
-        };
+            let display_text = value
+                .map(|value| format!("{} {}", round(value, ROUND_LIMIT), self.unit.to_string()))
+                .unwrap_or(NOT_APPLICABLE.to_string());
 
-        button.height(Length::Fill).width(Length::Fill).into()
-    }));
+            let mut button = button(Text::new(display_text));
 
-    Column::with_children(column)
+            if let Some(value) = value {
+                button = button.on_press(Message::CopyToClipboard(value));
+            };
+
+            button.height(Length::Fill).width(Length::Fill).into()
+        }));
+
+        Column::with_children(column)
+    }
 }
 
 // TODO: Style buttons to look like label
