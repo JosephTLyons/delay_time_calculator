@@ -353,3 +353,4 @@ impl Tap {
 // TODO: [Other features](https://github.com/JosephTLyons/GUI-Delay-Time-Calculator?tab=readme-ov-file#features)
 // TODO: Round input when using enter or exiting focus
 // TODO: Tap tempo on mouse down
+// TODO: Clamp to 0
