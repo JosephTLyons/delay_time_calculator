@@ -47,15 +47,6 @@ enum Unit {
     Hertz,
 }
 
-impl Unit {
-    fn toggle(&self) -> Self {
-        match self {
-            Unit::Milliseconds => Unit::Hertz,
-            Unit::Hertz => Unit::Milliseconds,
-        }
-    }
-}
-
 impl Display for Unit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -142,7 +133,7 @@ enum Message {
     // to the tempo before sending the message?
     AdjustTempo(f64, f64),
     StoreTempo(String),
-    ToggleUnit,
+    StoreUnit(Unit),
     CopyToClipboard(f64),
 }
 
@@ -184,7 +175,9 @@ impl Tap {
                 self.tempo_input_text = text;
                 self.tempo = self.tempo_input_text.parse().ok();
             }
-            Message::ToggleUnit => self.unit = self.unit.toggle(),
+            Message::StoreUnit(unit) => {
+                self.unit = unit;
+            }
             Message::CopyToClipboard(value) => {
                 self.clipboard
                     .as_mut()
@@ -220,11 +213,11 @@ impl Tap {
             button("Halve").on_press(HALVE_MESSAGE).into(),
             button("Double").on_press(DOUBLE_MESSAGE).into(),
             radio(Unit::Milliseconds.to_string(), (), ms_selected, |_| {
-                Message::ToggleUnit
+                Message::StoreUnit(Unit::Milliseconds)
             })
             .into(),
             radio(Unit::Hertz.to_string(), (), hz_selected, |_| {
-                Message::ToggleUnit
+                Message::StoreUnit(Unit::Hertz)
             })
             .into(),
         ])
@@ -315,8 +308,6 @@ impl Tap {
     }
 
     // TODO Keys:
-    // 'M' enables ms
-    // 'H' enables Hz
     // 'Spacebar = Round Value
     // C = Coarse Resolution
     // S = Standard Resolution
@@ -324,10 +315,12 @@ impl Tap {
     fn subscription(&self) -> Subscription<Message> {
         keyboard::on_key_press(|key, _| match key {
             keyboard::Key::Character(c) => match c.as_str() {
-                "t" => Some(Message::Tap),
-                "r" => Some(Message::Reset),
                 "1" => Some(HALVE_MESSAGE),
                 "2" => Some(DOUBLE_MESSAGE),
+                "h" => Some(Message::StoreUnit(Unit::Hertz)),
+                "m" => Some(Message::StoreUnit(Unit::Milliseconds)),
+                "r" => Some(Message::Reset),
+                "t" => Some(Message::Tap),
                 _ => None,
             },
             keyboard::Key::Named(named) => match named {
