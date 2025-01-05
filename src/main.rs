@@ -16,12 +16,6 @@ const INITIAL_WINDOW_SIZE: Size = Size {
     height: 600.0,
 };
 const ROUND_LIMIT: i32 = 3;
-const HALVE_MESSAGE: Message = Message::AdjustTempo(0.5, 0.0);
-const DOUBLE_MESSAGE: Message = Message::AdjustTempo(2.0, 0.0);
-const INCREMENT_ONE_MESSAGE: Message = Message::AdjustTempo(1.0, 1.0);
-const DECREMENT_ONE_MESSAGE: Message = Message::AdjustTempo(1.0, -1.0);
-const INCREMENT_FIVE_MESSAGE: Message = Message::AdjustTempo(1.0, 5.0);
-const DECREMENT_FIVE_MESSAGE: Message = Message::AdjustTempo(1.0, -5.0);
 
 pub fn main() -> iced::Result {
     iced::application("Delay Time Calculator", Tap::update, Tap::view)
@@ -131,7 +125,7 @@ enum Message {
     Reset,
     // TODO: Can Adjust and Store be combined into store with math being applied
     // to the tempo before sending the message?
-    AdjustTempo(f64, f64),
+    AdjustTempo(fn(f64) -> f64),
     StoreTempo(String),
     StoreUnit(Unit),
     CopyToClipboard(f64),
@@ -164,9 +158,9 @@ impl Tap {
             Message::Reset => {
                 self.tap_tempo.reset();
             }
-            Message::AdjustTempo(multiplier, offset) => {
+            Message::AdjustTempo(modify_tempo) => {
                 if let Some(tempo) = self.tempo {
-                    let tempo = tempo * multiplier + offset;
+                    let tempo = modify_tempo(tempo);
                     self.tempo = Some(tempo);
                     self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
                 }
@@ -205,8 +199,12 @@ impl Tap {
             text_input("", self.tempo_input_text.as_str())
                 .on_input(|text| Message::StoreTempo(text))
                 .into(),
-            button("Halve").on_press(HALVE_MESSAGE).into(),
-            button("Double").on_press(DOUBLE_MESSAGE).into(),
+            button("Halve")
+                .on_press(Message::AdjustTempo(|t| t / 2.0))
+                .into(),
+            button("Double")
+                .on_press(Message::AdjustTempo(|t| t * 2.0))
+                .into(),
         ])
         .spacing(SPACING);
 
@@ -321,8 +319,8 @@ impl Tap {
     fn handle_key_press(&self) -> Subscription<Message> {
         keyboard::on_key_press(|key, _| match key {
             keyboard::Key::Character(c) => match c.as_str() {
-                "1" => Some(HALVE_MESSAGE),
-                "2" => Some(DOUBLE_MESSAGE),
+                "1" => Some(Message::AdjustTempo(|t| t / 2.0)),
+                "2" => Some(Message::AdjustTempo(|t| t * 2.0)),
                 "h" => Some(Message::StoreUnit(Unit::Hertz)),
                 "m" => Some(Message::StoreUnit(Unit::Milliseconds)),
                 "r" => Some(Message::Reset),
@@ -330,10 +328,10 @@ impl Tap {
                 _ => None,
             },
             keyboard::Key::Named(named) => match named {
-                key::Named::ArrowUp => Some(INCREMENT_ONE_MESSAGE),
-                key::Named::ArrowDown => Some(DECREMENT_ONE_MESSAGE),
-                key::Named::ArrowRight => Some(INCREMENT_FIVE_MESSAGE),
-                key::Named::ArrowLeft => Some(DECREMENT_FIVE_MESSAGE),
+                key::Named::ArrowUp => Some(Message::AdjustTempo(|t| t + 1.0)),
+                key::Named::ArrowDown => Some(Message::AdjustTempo(|t| t - 1.0)),
+                key::Named::ArrowRight => Some(Message::AdjustTempo(|t| t + 5.0)),
+                key::Named::ArrowLeft => Some(Message::AdjustTempo(|t| t - 5.0)),
                 _ => None,
             },
             _ => None,
