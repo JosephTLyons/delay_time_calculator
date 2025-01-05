@@ -207,6 +207,17 @@ impl Tap {
                 .into(),
             button("Halve").on_press(HALVE_MESSAGE).into(),
             button("Double").on_press(DOUBLE_MESSAGE).into(),
+        ])
+        .spacing(SPACING);
+
+        let table = self.table().height(Length::Fill);
+        let column = column![controls_row, table].spacing(SPACING);
+
+        container(column).padding(SPACING).into()
+    }
+
+    fn table<'a>(&self) -> Row<'a, Message, Theme, Renderer> {
+        let unit_toggles = Row::with_children(vec![
             // TODO: Refactor into a function?
             radio(
                 Unit::Milliseconds.to_string(),
@@ -223,18 +234,11 @@ impl Tap {
             )
             .into(),
         ])
+        .width(Length::Fill)
+        .height(Length::Fill)
         .spacing(SPACING);
 
-        let table = self.table().height(Length::Fill);
-        let column = column![controls_row, table].spacing(SPACING);
-
-        container(column).padding(SPACING).into()
-    }
-
-    fn table<'a>(&self) -> Row<'a, Message, Theme, Renderer> {
-        let mut note_labels: Vec<Element<_>> = vec![
-            text("").height(Length::Fill).into(), // Is there a better way to add a blank cell?
-        ];
+        let mut note_labels: Vec<Element<_>> = vec![unit_toggles.into()];
 
         note_labels.extend(NOTE_VALUES.map(|note_value| {
             text(format!("{}:", note_value.to_string()))
@@ -350,4 +354,3 @@ impl Tap {
 // TODO: Tap tempo on mouse down
 // TODO: Clamp to 0
 // TODO: Tooltips with key bindings
-// TODO: Move ms / Hz toggle
