@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use arboard::Clipboard;
-use delay_times;
+use delay_times::{self, DelayTimes};
 use iced::keyboard::key;
 use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Text};
 use iced::window::Settings;
@@ -266,18 +266,7 @@ impl Tap {
         &self,
         rhythmic_modifier: &RhythmicModifier,
     ) -> Column<'a, Message, Theme, Renderer> {
-        let delay_times = self.tempo.map(|tempo| {
-            let delay_times = delay_times::DelayTimes::new(tempo);
-            let delay_times = match self.unit {
-                Unit::Milliseconds => delay_times.in_ms(),
-                Unit::Hertz => delay_times.in_hz(),
-            };
-            match rhythmic_modifier {
-                RhythmicModifier::Normal => delay_times.normal(),
-                RhythmicModifier::Dotted => delay_times.dotted(),
-                RhythmicModifier::Triplet => delay_times.triplet(),
-            }
-        });
+        let delay_times = self.delay_times(rhythmic_modifier);
 
         let mut column: Vec<Element<_>> = vec![text(rhythmic_modifier.to_string())
             .height(Length::Fill)
@@ -309,6 +298,21 @@ impl Tap {
         }));
 
         Column::with_children(column)
+    }
+
+    fn delay_times(&self, rhythmic_modifier: &RhythmicModifier) -> Option<DelayTimes> {
+        self.tempo.map(|tempo| {
+            let delay_times = delay_times::DelayTimes::new(tempo);
+            let delay_times = match self.unit {
+                Unit::Milliseconds => delay_times.in_ms(),
+                Unit::Hertz => delay_times.in_hz(),
+            };
+            match rhythmic_modifier {
+                RhythmicModifier::Normal => delay_times.normal(),
+                RhythmicModifier::Dotted => delay_times.dotted(),
+                RhythmicModifier::Triplet => delay_times.triplet(),
+            }
+        })
     }
 
     // TODO Keys:
