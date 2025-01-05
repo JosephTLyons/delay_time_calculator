@@ -342,7 +342,6 @@ impl Tap {
 }
 
 // TODO: Style buttons to look like label
-// TODO: simplify tests
 // TODO: auto reset tap tempo
 // TODO: reverse input
 // TODO: keyboard driven
@@ -354,3 +353,4 @@ impl Tap {
 // TODO: Tap tempo on mouse down
 // TODO: Clamp to 0
 // TODO: Tooltips with key bindings
+// TODO: Only allow numeric input
