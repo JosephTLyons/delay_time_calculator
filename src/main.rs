@@ -315,10 +315,6 @@ impl Tap {
         })
     }
 
-    // TODO Keys:
-    // C = Coarse Resolution
-    // S = Standard Resolution
-    // F = Fine Resolution
     fn handle_key_press(&self) -> Subscription<Message> {
         keyboard::on_key_press(|key, _| match key {
             keyboard::Key::Character(c) => match c.as_str() {
@@ -346,7 +342,6 @@ impl Tap {
 // TODO: Style buttons to look like label
 // TODO: auto reset tap tempo
 // TODO: reverse input
-// TODO: keyboard driven
 // TODO: styling
 // TODO: precision input
 // TODO: Click and drag to adjust tempo
