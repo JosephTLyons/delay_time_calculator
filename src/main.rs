@@ -316,7 +316,6 @@ impl Tap {
     }
 
     // TODO Keys:
-    // 'Spacebar = Round Value
     // C = Coarse Resolution
     // S = Standard Resolution
     // F = Fine Resolution
@@ -336,6 +335,7 @@ impl Tap {
                 key::Named::ArrowDown => Some(Message::AdjustTempo(|t| t - 1.0)),
                 key::Named::ArrowRight => Some(Message::AdjustTempo(|t| t + 5.0)),
                 key::Named::ArrowLeft => Some(Message::AdjustTempo(|t| t - 5.0)),
+                key::Named::Space => Some(Message::AdjustTempo(|t| round(t, 0))),
                 _ => None,
             },
             _ => None,
