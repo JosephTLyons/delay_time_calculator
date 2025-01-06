@@ -3,9 +3,11 @@ use std::fmt::Display;
 use arboard::Clipboard;
 use delay_times::{self, DelayTimes};
 use iced::keyboard::key;
-use iced::widget::{button, column, container, radio, text, text_input, Column, Row, Text};
-use iced::window::Settings;
 use iced::{keyboard, Element, Length, Renderer, Size, Subscription, Task, Theme};
+use iced::{
+    widget::{button, column, container, radio, text, text_input, Column, Row, Text},
+    window::Settings,
+};
 use round::round;
 use tap_tempo::TapTempo;
 
@@ -115,6 +117,7 @@ struct Tap {
     tap_tempo: TapTempo,
     tempo: Option<f64>,
     tempo_input_text: String,
+    // tempo_input_text_button: TextInput,
     unit: Unit,
     clipboard: Option<Clipboard>,
 }
@@ -125,8 +128,9 @@ enum Message {
     Reset,
     // TODO: Can Adjust and Store be combined into store with math being applied
     // to the tempo before sending the message?
-    AdjustTempo(fn(f64) -> f64),
-    StoreTempo(String),
+    StoreTempoText(String),
+    StoreTempo,
+    ModifyTempo(fn(f64) -> f64),
     StoreUnit(Unit),
     CopyToClipboard(f64),
 }
@@ -158,16 +162,21 @@ impl Tap {
             Message::Reset => {
                 self.tap_tempo.reset();
             }
-            Message::AdjustTempo(modify_tempo) => {
+            Message::StoreTempoText(text) => {
+                self.tempo_input_text = text;
+            }
+            Message::StoreTempo => {
+                self.tempo = self.tempo_input_text.parse().ok();
+                if let Some(tempo) = self.tempo {
+                    self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
+                }
+            }
+            Message::ModifyTempo(modify_tempo) => {
                 if let Some(tempo) = self.tempo {
                     let tempo = modify_tempo(tempo);
                     self.tempo = Some(tempo);
                     self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
                 }
-            }
-            Message::StoreTempo(text) => {
-                self.tempo_input_text = text;
-                self.tempo = self.tempo_input_text.parse().ok();
             }
             Message::StoreUnit(unit) => {
                 self.unit = unit;
@@ -197,13 +206,14 @@ impl Tap {
                 .on_press(Message::Reset)
                 .into(),
             text_input("", self.tempo_input_text.as_str())
-                .on_input(|text| Message::StoreTempo(text))
+                .on_input(Message::StoreTempoText)
+                .on_submit(Message::StoreTempo)
                 .into(),
             button("Halve")
-                .on_press(Message::AdjustTempo(|t| t / 2.0))
+                .on_press(Message::ModifyTempo(|t| t / 2.0))
                 .into(),
             button("Double")
-                .on_press(Message::AdjustTempo(|t| t * 2.0))
+                .on_press(Message::ModifyTempo(|t| t * 2.0))
                 .into(),
         ])
         .spacing(SPACING);
@@ -322,8 +332,8 @@ impl Tap {
     fn handle_key_press() -> Subscription<Message> {
         keyboard::on_key_press(|key, _| match key {
             keyboard::Key::Character(c) => match c.as_str() {
-                "1" => Some(Message::AdjustTempo(|t| t / 2.0)),
-                "2" => Some(Message::AdjustTempo(|t| t * 2.0)),
+                "1" => Some(Message::ModifyTempo(|t| t / 2.0)),
+                "2" => Some(Message::ModifyTempo(|t| t * 2.0)),
                 "h" => Some(Message::StoreUnit(Unit::Hertz)),
                 "m" => Some(Message::StoreUnit(Unit::Milliseconds)),
                 "r" => Some(Message::Reset),
@@ -331,11 +341,11 @@ impl Tap {
                 _ => None,
             },
             keyboard::Key::Named(named) => match named {
-                key::Named::ArrowUp => Some(Message::AdjustTempo(|t| t + 1.0)),
-                key::Named::ArrowDown => Some(Message::AdjustTempo(|t| t - 1.0)),
-                key::Named::ArrowRight => Some(Message::AdjustTempo(|t| t + 5.0)),
-                key::Named::ArrowLeft => Some(Message::AdjustTempo(|t| t - 5.0)),
-                key::Named::Space => Some(Message::AdjustTempo(|t| round(t, 0))),
+                key::Named::ArrowUp => Some(Message::ModifyTempo(|t| t + 1.0)),
+                key::Named::ArrowDown => Some(Message::ModifyTempo(|t| t - 1.0)),
+                key::Named::ArrowRight => Some(Message::ModifyTempo(|t| t + 5.0)),
+                key::Named::ArrowLeft => Some(Message::ModifyTempo(|t| t - 5.0)),
+                key::Named::Space => Some(Message::ModifyTempo(|t| round(t, 0))),
                 _ => None,
             },
             _ => None,
@@ -350,8 +360,10 @@ impl Tap {
 // TODO: precision input
 // TODO: Click and drag to adjust tempo
 // TODO: [Other features](https://github.com/JosephTLyons/GUI-Delay-Time-Calculator?tab=readme-ov-file#features)
-// TODO: Round input when using enter or exiting focus
 // TODO: Tap tempo on mouse down
 // TODO: Clamp to 0
 // TODO: Tooltips with key bindings
-// TODO: Only allow numeric input
+// TODO: Only allow numeric input on submit
+// TODO: Input should be accepted when text input loses focus
+// TODO: Round input when using enter or focus is lost
+// TODO: Enter on text input removes focus
