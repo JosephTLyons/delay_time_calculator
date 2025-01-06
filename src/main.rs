@@ -19,7 +19,7 @@ const ROUND_LIMIT: i32 = 3;
 
 pub fn main() -> iced::Result {
     iced::application("Delay Time Calculator", Tap::update, Tap::view)
-        .subscription(Tap::handle_key_press)
+        .subscription(Tap::subscription)
         .theme(|_| Theme::Dracula)
         .window(Settings {
             size: Size {
@@ -315,7 +315,11 @@ impl Tap {
         })
     }
 
-    fn handle_key_press(&self) -> Subscription<Message> {
+    fn subscription(&self) -> Subscription<Message> {
+        Subscription::batch(vec![Tap::handle_key_press()])
+    }
+
+    fn handle_key_press() -> Subscription<Message> {
         keyboard::on_key_press(|key, _| match key {
             keyboard::Key::Character(c) => match c.as_str() {
                 "1" => Some(Message::AdjustTempo(|t| t / 2.0)),
