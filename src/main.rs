@@ -115,7 +115,6 @@ const NOTE_VALUES: [NoteValue; 8] = [
 
 struct Tap {
     tap_tempo: TapTempo,
-    tempo: Option<f64>,
     tempo_input_text: String,
     // tempo_input_text_button: TextInput,
     unit: Unit,
@@ -141,7 +140,6 @@ impl Default for Tap {
 
         Self {
             tap_tempo: TapTempo::new(),
-            tempo: Some(tempo),
             tempo_input_text: tempo.to_string(),
             unit: Unit::Milliseconds,
             clipboard: Clipboard::new().ok(),
@@ -152,13 +150,10 @@ impl Default for Tap {
 impl Tap {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::Tap => {
-                self.tempo = self.tap_tempo.tap();
-                match self.tempo {
-                    Some(tempo) => self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string(),
-                    None => self.tempo_input_text = NOT_APPLICABLE.to_string(),
-                }
-            }
+            Message::Tap => match self.tap_tempo.tap() {
+                Some(tempo) => self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string(),
+                None => self.tempo_input_text = NOT_APPLICABLE.to_string(),
+            },
             Message::Reset => {
                 self.tap_tempo.reset();
             }
@@ -166,15 +161,13 @@ impl Tap {
                 self.tempo_input_text = text;
             }
             Message::StoreTempo => {
-                self.tempo = self.tempo_input_text.parse().ok();
-                if let Some(tempo) = self.tempo {
+                if let Some(tempo) = self.tempo() {
                     self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
                 }
             }
             Message::ModifyTempo(modify_tempo) => {
-                if let Some(tempo) = self.tempo {
+                if let Some(tempo) = self.tempo() {
                     let tempo = modify_tempo(tempo);
-                    self.tempo = Some(tempo);
                     self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
                 }
             }
@@ -311,7 +304,7 @@ impl Tap {
     }
 
     fn delay_times(&self, rhythmic_modifier: &RhythmicModifier) -> Option<DelayTimes> {
-        self.tempo.map(|tempo| {
+        self.tempo().map(|tempo| {
             let delay_times = delay_times::DelayTimes::new(tempo);
             let delay_times = match self.unit {
                 Unit::Milliseconds => delay_times.in_ms(),
@@ -323,6 +316,10 @@ impl Tap {
                 RhythmicModifier::Triplet => delay_times.triplet(),
             }
         })
+    }
+
+    fn tempo(&self) -> Option<f64> {
+        self.tempo_input_text.parse().ok()
     }
 
     fn subscription(&self) -> Subscription<Message> {
