@@ -17,7 +17,7 @@ const INITIAL_WINDOW_SIZE: Size = Size {
     width: 650.0,
     height: 600.0,
 };
-const ROUND_LIMIT: i32 = 3;
+const FLOAT_PRECISION: i32 = 3;
 
 pub fn main() -> iced::Result {
     iced::application("Delay Time Calculator", Tap::update, Tap::view)
@@ -288,7 +288,13 @@ impl Tap {
             });
 
             let display_text = value
-                .map(|value| format!("{} {}", round(value, ROUND_LIMIT), self.unit.to_string()))
+                .map(|value| {
+                    format!(
+                        "{} {}",
+                        round(value, FLOAT_PRECISION),
+                        self.unit.to_string()
+                    )
+                })
                 .unwrap_or(NOT_APPLICABLE.to_string());
 
             let mut button = button(Text::new(display_text));
@@ -323,7 +329,7 @@ impl Tap {
     }
 
     fn set_tempo_text(&mut self, tempo: f64) {
-        self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
+        self.tempo_input_text = round(tempo, FLOAT_PRECISION).to_string();
     }
 
     fn subscription(&self) -> Subscription<Message> {
