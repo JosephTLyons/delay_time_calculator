@@ -151,7 +151,7 @@ impl Tap {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::Tap => match self.tap_tempo.tap() {
-                Some(tempo) => self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string(),
+                Some(tempo) => self.set_tempo_text(tempo),
                 None => self.tempo_input_text = NOT_APPLICABLE.to_string(),
             },
             Message::Reset => {
@@ -162,13 +162,13 @@ impl Tap {
             }
             Message::StoreTempo => {
                 if let Some(tempo) = self.tempo() {
-                    self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
+                    self.set_tempo_text(tempo);
                 }
             }
             Message::ModifyTempo(modify_tempo) => {
                 if let Some(tempo) = self.tempo() {
                     let tempo = modify_tempo(tempo);
-                    self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
+                    self.set_tempo_text(tempo);
                 }
             }
             Message::StoreUnit(unit) => {
@@ -320,6 +320,10 @@ impl Tap {
 
     fn tempo(&self) -> Option<f64> {
         self.tempo_input_text.parse().ok()
+    }
+
+    fn set_tempo_text(&mut self, tempo: f64) {
+        self.tempo_input_text = round(tempo, ROUND_LIMIT).to_string();
     }
 
     fn subscription(&self) -> Subscription<Message> {
