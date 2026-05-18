@@ -3,9 +3,9 @@ use std::fmt::Display;
 use arboard::Clipboard;
 use delay_times::{self, DelayTimes};
 use iced::keyboard::key;
-use iced::{keyboard, Element, Length, Renderer, Size, Subscription, Task, Theme};
+use iced::{keyboard, mouse, Element, Length, Renderer, Size, Subscription, Task, Theme};
 use iced::{
-    widget::{button, column, container, radio, text, text_input, Column, Row, Text},
+    widget::{button, column, container, mouse_area, radio, text, text_input, Column, Row},
     window::Settings,
 };
 use round::round;
@@ -298,13 +298,19 @@ impl Tap {
                 })
                 .unwrap_or(NOT_APPLICABLE.to_string());
 
-            let mut button = button(Text::new(display_text));
+            let label = container(text(display_text))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center(Length::Fill);
 
             if let (Some(value), Some(_)) = (value, &self.clipboard) {
-                button = button.on_press(Message::CopyToClipboard(value));
+                mouse_area(label)
+                    .on_press(Message::CopyToClipboard(value))
+                    .interaction(mouse::Interaction::Pointer)
+                    .into()
+            } else {
+                label.into()
             }
-
-            button.height(Length::Fill).width(Length::Fill).into()
         }));
 
         Column::with_children(column)
@@ -367,7 +373,6 @@ impl Tap {
     }
 }
 
-// TODO: Style buttons to look like label
 // TODO: auto reset tap tempo
 // TODO: reverse input
 // TODO: styling
