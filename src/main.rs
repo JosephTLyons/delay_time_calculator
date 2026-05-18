@@ -219,7 +219,7 @@ impl Tap {
         container(column).padding(SPACING).into()
     }
 
-    fn table<'a>(&self) -> Row<'a, Message, Theme, Renderer> {
+    fn table<'a>(&self) -> Column<'a, Message, Theme, Renderer> {
         let unit_toggles = Row::with_children(vec![
             // TODO: Refactor into a function?
             radio(
@@ -237,107 +237,105 @@ impl Tap {
             )
             .into(),
         ])
-        .width(Length::Fill)
-        .height(Length::Fill)
         .spacing(SPACING);
 
-        let mut note_labels: Vec<Element<_>> = vec![unit_toggles.into()];
+        let header_row = Row::with_children(vec![
+            cell_container(unit_toggles).into(),
+            cell_container(text("Normal")).into(),
+            cell_container(text("Dotted")).into(),
+            cell_container(text("Triplet")).into(),
+        ])
+        .spacing(SPACING)
+        .height(Length::Fill);
 
-        note_labels.extend(NOTE_VALUES.map(|note_value| {
-            text(format!("{}:", note_value.to_string()))
-                .height(Length::Fill)
-                .into()
-        }));
+        let mut rows: Vec<Element<_>> = vec![header_row.into()];
 
-        let note_label_column = Column::with_children(note_labels)
-            .height(Length::Fill)
-            .spacing(SPACING);
+        for note_value in &NOTE_VALUES {
+            let label = container(text(format!("{}:", note_value.to_string())))
+                .align_left(Length::Fill)
+                .center_y(Length::Fill);
 
-        let mut table: Vec<Element<_>> = vec![note_label_column.width(Length::Fill).into()];
+            let mut cells: Vec<Element<_>> = vec![label.into()];
 
-        for rhythmic_modifier in &RHYTHMIC_MODIFIER {
-            table.push(
-                self.values_column(rhythmic_modifier)
-                    .width(Length::Fill)
+            for rhythmic_modifier in &RHYTHMIC_MODIFIER {
+                cells.push(self.value_cell(rhythmic_modifier, note_value));
+            }
+
+            rows.push(
+                Row::with_children(cells)
                     .spacing(SPACING)
+                    .height(Length::Fill)
                     .into(),
             );
         }
 
-        Row::with_children(table).spacing(SPACING)
+        Column::with_children(rows).spacing(SPACING)
     }
 
-    fn values_column<'a>(
+    fn value_cell<'a>(
         &self,
         rhythmic_modifier: &RhythmicModifier,
-    ) -> Column<'a, Message, Theme, Renderer> {
+        note_value: &NoteValue,
+    ) -> Element<'a, Message, Theme, Renderer> {
         let delay_times = self.delay_times(rhythmic_modifier);
 
-        let mut column: Vec<Element<_>> = vec![text(rhythmic_modifier.to_string())
-            .height(Length::Fill)
-            .into()];
+        let value = delay_times.as_ref().map(|delay_times| match note_value {
+            NoteValue::Whole => delay_times.v_whole,
+            NoteValue::Half => delay_times.v_half,
+            NoteValue::Quarter => delay_times.v_quarter,
+            NoteValue::Eighth => delay_times.v_8th,
+            NoteValue::Sixteenth => delay_times.v_16th,
+            NoteValue::ThirtySecond => delay_times.v_32nd,
+            NoteValue::SixtyFourth => delay_times.v_64th,
+            NoteValue::HundredTwentyEighth => delay_times.v_128th,
+        });
 
-        column.extend(NOTE_VALUES.map(|note_value| {
-            let value = delay_times.as_ref().map(|delay_times| match note_value {
-                NoteValue::Whole => delay_times.v_whole,
-                NoteValue::Half => delay_times.v_half,
-                NoteValue::Quarter => delay_times.v_quarter,
-                NoteValue::Eighth => delay_times.v_8th,
-                NoteValue::Sixteenth => delay_times.v_16th,
-                NoteValue::ThirtySecond => delay_times.v_32nd,
-                NoteValue::SixtyFourth => delay_times.v_64th,
-                NoteValue::HundredTwentyEighth => delay_times.v_128th,
-            });
-
-            let display_text = value
-                .map(|value| {
-                    format!(
-                        "{} {}",
-                        round(value, FLOAT_PRECISION),
-                        self.unit.to_string()
-                    )
-                })
-                .unwrap_or(NOT_APPLICABLE.to_string());
-
-            let cell = button(
-                container(text(display_text))
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .center(Length::Fill),
-            )
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .style(|theme: &Theme, status| {
-                let palette = theme.extended_palette();
-                let background = match status {
-                    button::Status::Hovered => Some(palette.primary.weak.color.into()),
-                    button::Status::Pressed => Some(palette.primary.strong.color.into()),
-                    button::Status::Active | button::Status::Disabled => None,
-                };
-
-                button::Style {
-                    background,
-                    text_color: palette.background.base.text,
-                    ..button::Style::default()
-                }
-            });
-
-            if let (Some(value), Some(_)) = (value, &self.clipboard) {
-                tooltip(
-                    cell.on_press(Message::CopyToClipboard(value)),
-                    container(text("Click to copy"))
-                        .padding(5)
-                        .style(container::rounded_box),
-                    tooltip::Position::Bottom,
+        let display_text = value
+            .map(|value| {
+                format!(
+                    "{} {}",
+                    round(value, FLOAT_PRECISION),
+                    self.unit.to_string()
                 )
-                .delay(Duration::from_millis(500))
-                .into()
-            } else {
-                cell.into()
-            }
-        }));
+            })
+            .unwrap_or(NOT_APPLICABLE.to_string());
 
-        Column::with_children(column)
+        let cell = button(
+            container(text(display_text))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center(Length::Fill),
+        )
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .style(|theme: &Theme, status| {
+            let palette = theme.extended_palette();
+            let background = match status {
+                button::Status::Hovered => Some(palette.primary.weak.color.into()),
+                button::Status::Pressed => Some(palette.primary.strong.color.into()),
+                button::Status::Active | button::Status::Disabled => None,
+            };
+
+            button::Style {
+                background,
+                text_color: palette.background.base.text,
+                ..button::Style::default()
+            }
+        });
+
+        if let (Some(value), Some(_)) = (value, &self.clipboard) {
+            tooltip(
+                cell.on_press(Message::CopyToClipboard(value)),
+                container(text("Click to copy"))
+                    .padding(5)
+                    .style(container::rounded_box),
+                tooltip::Position::Bottom,
+            )
+            .delay(Duration::from_millis(500))
+            .into()
+        } else {
+            cell.into()
+        }
     }
 
     fn delay_times(&self, rhythmic_modifier: &RhythmicModifier) -> Option<DelayTimes> {
@@ -395,6 +393,15 @@ impl Tap {
             }
         })
     }
+}
+
+fn cell_container<'a, Message: 'a>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+) -> iced::widget::Container<'a, Message, Theme, Renderer> {
+    container(content)
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .center(Length::Fill)
 }
 
 // TODO: auto reset tap tempo
