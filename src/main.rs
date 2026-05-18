@@ -3,11 +3,9 @@ use std::fmt::Display;
 use arboard::Clipboard;
 use delay_times::{self, DelayTimes};
 use iced::keyboard::key;
-use iced::{keyboard, mouse, Element, Length, Renderer, Size, Subscription, Task, Theme};
+use iced::{keyboard, Element, Length, Renderer, Size, Subscription, Task, Theme};
 use iced::{
-    widget::{
-        button, column, container, mouse_area, radio, text, text_input, tooltip, Column, Row,
-    },
+    widget::{button, column, container, radio, text, text_input, tooltip, Column, Row},
     window::Settings,
 };
 use round::round;
@@ -300,18 +298,32 @@ impl Tap {
                 })
                 .unwrap_or(NOT_APPLICABLE.to_string());
 
-            let label = container(text(display_text))
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .center(Length::Fill);
+            let cell = button(
+                container(text(display_text))
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .center(Length::Fill),
+            )
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .style(|theme: &Theme, status| {
+                let palette = theme.extended_palette();
+                let background = match status {
+                    button::Status::Hovered => Some(palette.primary.weak.color.into()),
+                    button::Status::Pressed => Some(palette.primary.strong.color.into()),
+                    button::Status::Active | button::Status::Disabled => None,
+                };
+
+                button::Style {
+                    background,
+                    text_color: palette.background.base.text,
+                    ..button::Style::default()
+                }
+            });
 
             if let (Some(value), Some(_)) = (value, &self.clipboard) {
-                let mouse_area = mouse_area(label)
-                    .on_press(Message::CopyToClipboard(value))
-                    .interaction(mouse::Interaction::Pointer);
-
                 tooltip(
-                    mouse_area,
+                    cell.on_press(Message::CopyToClipboard(value)),
                     container(text("Click to copy"))
                         .padding(5)
                         .style(container::rounded_box),
@@ -319,7 +331,7 @@ impl Tap {
                 )
                 .into()
             } else {
-                label.into()
+                cell.into()
             }
         }));
 
