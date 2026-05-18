@@ -3,6 +3,7 @@ use std::fmt::Display;
 use arboard::Clipboard;
 use delay_times::{self, DelayTimes};
 use iced::keyboard::key;
+use iced::time::Duration;
 use iced::{keyboard, Element, Length, Renderer, Size, Subscription, Task, Theme};
 use iced::{
     widget::{button, column, container, radio, text, text_input, tooltip, Column, Row},
@@ -329,6 +330,7 @@ impl Tap {
                         .style(container::rounded_box),
                     tooltip::Position::Bottom,
                 )
+                .delay(Duration::from_millis(500))
                 .into()
             } else {
                 cell.into()
