@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-arboard = "3.4.1"
+arboard = "3.6.1"
 chrono = "0.4.44"
 delay_times = "0.2.1"
 iced = { version = "0.14.0", features = ["canvas", "tokio", "debug"] }
