@@ -11,7 +11,7 @@ use iced::{
 use round::round;
 use tap_tempo::TapTempo;
 
-const SPACING: u16 = 15;
+const SPACING: f32 = 15.0;
 const NOT_APPLICABLE: &str = "N/A";
 const INITIAL_WINDOW_SIZE: Size = Size {
     width: 650.0,
@@ -20,9 +20,10 @@ const INITIAL_WINDOW_SIZE: Size = Size {
 const FLOAT_PRECISION: i32 = 3;
 
 pub fn main() -> iced::Result {
-    iced::application("Delay Time Calculator", Tap::update, Tap::view)
+    iced::application(Tap::default, Tap::update, Tap::view)
+        .title("Delay Time Calculator")
         .subscription(Tap::subscription)
-        .theme(|_| Theme::Dracula)
+        .theme(|_: &Tap| Theme::Dracula)
         .window(Settings {
             size: Size {
                 ..INITIAL_WINDOW_SIZE
@@ -184,7 +185,7 @@ impl Tap {
         Task::none()
     }
 
-    fn view(&self) -> Element<Message> {
+    fn view(&self) -> Element<'_, Message> {
         let controls_row = Row::with_children(vec![
             button("Tap").on_press(Message::Tap).into(),
             button("Reset")
@@ -337,25 +338,31 @@ impl Tap {
     }
 
     fn handle_key_press() -> Subscription<Message> {
-        keyboard::on_key_press(|key, _| match key {
-            keyboard::Key::Character(c) => match c.as_str() {
-                "1" => Some(Message::ModifyTempo(|t| t / 2.0)),
-                "2" => Some(Message::ModifyTempo(|t| t * 2.0)),
-                "h" => Some(Message::StoreUnit(Unit::Hertz)),
-                "m" => Some(Message::StoreUnit(Unit::Milliseconds)),
-                "r" => Some(Message::Reset),
-                "t" => Some(Message::Tap),
+        keyboard::listen().filter_map(|event| {
+            let keyboard::Event::KeyPressed { key, .. } = event else {
+                return None;
+            };
+
+            match key {
+                keyboard::Key::Character(c) => match c.as_str() {
+                    "1" => Some(Message::ModifyTempo(|t| t / 2.0)),
+                    "2" => Some(Message::ModifyTempo(|t| t * 2.0)),
+                    "h" => Some(Message::StoreUnit(Unit::Hertz)),
+                    "m" => Some(Message::StoreUnit(Unit::Milliseconds)),
+                    "r" => Some(Message::Reset),
+                    "t" => Some(Message::Tap),
+                    _ => None,
+                },
+                keyboard::Key::Named(named) => match named {
+                    key::Named::ArrowUp => Some(Message::ModifyTempo(|t| t + 1.0)),
+                    key::Named::ArrowDown => Some(Message::ModifyTempo(|t| t - 1.0)),
+                    key::Named::ArrowRight => Some(Message::ModifyTempo(|t| t + 5.0)),
+                    key::Named::ArrowLeft => Some(Message::ModifyTempo(|t| t - 5.0)),
+                    key::Named::Space => Some(Message::ModifyTempo(|t| round(t, 0))),
+                    _ => None,
+                },
                 _ => None,
-            },
-            keyboard::Key::Named(named) => match named {
-                key::Named::ArrowUp => Some(Message::ModifyTempo(|t| t + 1.0)),
-                key::Named::ArrowDown => Some(Message::ModifyTempo(|t| t - 1.0)),
-                key::Named::ArrowRight => Some(Message::ModifyTempo(|t| t + 5.0)),
-                key::Named::ArrowLeft => Some(Message::ModifyTempo(|t| t - 5.0)),
-                key::Named::Space => Some(Message::ModifyTempo(|t| round(t, 0))),
-                _ => None,
-            },
-            _ => None,
+            }
         })
     }
 }
