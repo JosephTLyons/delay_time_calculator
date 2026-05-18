@@ -5,7 +5,9 @@ use delay_times::{self, DelayTimes};
 use iced::keyboard::key;
 use iced::{keyboard, mouse, Element, Length, Renderer, Size, Subscription, Task, Theme};
 use iced::{
-    widget::{button, column, container, mouse_area, radio, text, text_input, Column, Row},
+    widget::{
+        button, column, container, mouse_area, radio, text, text_input, tooltip, Column, Row,
+    },
     window::Settings,
 };
 use round::round;
@@ -304,10 +306,18 @@ impl Tap {
                 .center(Length::Fill);
 
             if let (Some(value), Some(_)) = (value, &self.clipboard) {
-                mouse_area(label)
+                let mouse_area = mouse_area(label)
                     .on_press(Message::CopyToClipboard(value))
-                    .interaction(mouse::Interaction::Pointer)
-                    .into()
+                    .interaction(mouse::Interaction::Pointer);
+
+                tooltip(
+                    mouse_area,
+                    container(text("Click to copy"))
+                        .padding(5)
+                        .style(container::rounded_box),
+                    tooltip::Position::Bottom,
+                )
+                .into()
             } else {
                 label.into()
             }
